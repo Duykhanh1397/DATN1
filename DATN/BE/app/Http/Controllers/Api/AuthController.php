@@ -63,52 +63,60 @@ class AuthController extends Controller
 
 
     public function RegisterUser(Request $request)
-{
-    try {
-        $validateUser = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
-            'role' => 'required|in:Admin,Customer'
-        ]);
-
-        if ($validateUser->fails()) {
+    {
+        try {
+            // ✅ Validation dữ liệu đầu vào
+            $validateUser = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:6|confirmed',
+                'role' => 'required|in:Admin,Customer',
+                'phone' => 'required|string|min:10|max:15|unique:users,phone', // ✅ Số điện thoại phải là duy nhất
+                'address' => 'required|string|max:255' // ✅ Địa chỉ không được bỏ trống
+            ]);
+    
+            if ($validateUser->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validateUser->errors()
+                ], 400);
+            }
+    
+            // ✅ Tạo user với đầy đủ thông tin
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+                'phone' => $request->phone,
+                'address' => $request->address
+            ]);
+    
+            return response()->json([
+                'status' => true,
+                'message' => 'Đăng ký thành công!',
+                'token' => $user->createToken("API TOKEN")->plainTextToken,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'phone' => $user->phone,
+                    'address' => $user->address
+                ],
+            ], 201);
+    
+        } catch (\Throwable $th) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation error',
-                'errors' => $validateUser->errors()
-            ], 400);
+                'message' => 'Lỗi server: ' . $th->getMessage()
+            ], 500);
         }
-
-        // Tạo user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role
-        ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Đăng ký thành công!',
-            'token' => $user->createToken("API TOKEN")->plainTextToken,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role
-            ],
-        ], 201);
-
-    } catch (\Throwable $th) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Lỗi server: ' . $th->getMessage()
-        ], 500);
     }
-}
-
     
+
+
 
 
     /**
@@ -418,7 +426,7 @@ class AuthController extends Controller
 
 /**
 
-//  */
+  */
 // public function resetPassword(Request $request)
 // {
 //     try {
