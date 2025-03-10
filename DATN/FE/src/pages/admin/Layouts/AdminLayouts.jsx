@@ -11,10 +11,8 @@ const AdminLayout = () => {
       <Sidebar />
       <Layout>
         <HeaderAdmin />
-        <Content
-          style={{ margin: "20px", background: "#fff", padding: "20px" }}
-        >
-          <Outlet />
+        <Content style={{ margin: "20px", background: "#fff", padding: "20px" }}>
+          <Outlet /> {/* ✅ Load nội dung route con ở đây */}
         </Content>
       </Layout>
     </Layout>
@@ -22,3 +20,4 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
