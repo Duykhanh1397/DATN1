@@ -13,7 +13,7 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|boolean'
+            'status' => 'required|in:Hoạt động,Ngưng hoạt động'
         ]);
 
         $category = Category::create($request->all());
@@ -36,7 +36,7 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'sometimes|required|boolean'
+            'status' => 'sometimes|required|in:Hoạt động,Ngưng hoạt động'
         ]);
 
         $category = Category::findOrFail($id);

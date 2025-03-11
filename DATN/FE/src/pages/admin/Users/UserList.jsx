@@ -28,7 +28,7 @@
 //   return (
 //     <div>
 //       <h2>Quản lý Users</h2>
-      
+
 //       {/* Nút Đăng xuất */}
 //       <button onClick={logout} style={{ backgroundColor: "red", color: "white", marginBottom: "10px" }}>
 //         Đăng xuất
@@ -73,6 +73,7 @@
 // };
 
 // export default UserList;
+
 
 
 
@@ -233,6 +234,7 @@
 
 
   import { PlusCircleOutlined } from "@ant-design/icons";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -245,6 +247,15 @@ import {
   Table,
   Tag,
 } from "antd";
+
+import React, { useState } from "react";
+import { Drawer } from "antd";
+import API from "../../../services/api";
+import EditUser from "./EditUser";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+
+const UserList = () => {
+
 import React, { useState, useEffect, useContext } from "react";
 import { Drawer } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -256,13 +267,17 @@ import { AuthContext } from "../../../context/AuthContext";
 const UserList = () => {
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext); // Lấy hàm logout từ AuthContext
+
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userFilter, setUserFilter] = useState(null);
+
+
   const [isDeleting, setIsDeleting] = useState(false);
+
 
   // ✅ Lấy danh sách Users từ API
   const { data, isLoading } = useQuery({
@@ -275,16 +290,30 @@ const UserList = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+
+      return (
+        response.data?.data?.map((user, index) => ({
+          ...user,
+          key: user.id,
+          stt: index + 1,
+        })) || []
+      );
+
       return response.data?.data?.map((user, index) => ({
         ...user,
         key: user.id,
         stt: index + 1,
       })) || [];
+
     },
   });
 
   // ✅ Hàm xóa user với xác nhận
+
+  const { mutate } = useMutation({
+
   const deleteUserMutation = useMutation({
+
     mutationFn: async (id) => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Bạn chưa đăng nhập.");
@@ -302,6 +331,79 @@ const UserList = () => {
     },
   });
 
+
+  // ✅ Cấu hình cột của bảng
+  const columns = [
+    { title: "#", dataIndex: "stt", key: "stt" },
+    { title: "Tên", dataIndex: "name", key: "name" },
+    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Số điện thoại", dataIndex: "phone", key: "phone" },
+    { title: "Địa chỉ", dataIndex: "address", key: "address" },
+    {
+      title: "Tình trạng",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={status?.trim() === "Hoạt động" ? "#52C41A" : "#BFBFBF"}>
+          {status || "-"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Vai trò",
+      dataIndex: "role",
+      key: "role",
+      render: (role) => (
+        <Tag color={role?.trim() === "Admin" ? "#FF4D4F" : "#FAAD14 "}>
+          {role || "-"}
+        </Tag>
+      ),
+    },
+    {
+      key: "action",
+      width: 200,
+      render: (_, user) => (
+        <Space>
+          <Popconfirm
+            title="Xóa người dùng"
+            description="Bạn có chắc chắn muốn xóa không?"
+            onConfirm={() => mutate(user.id)}
+            okText="Có"
+            cancelText="Không"
+          >
+            <Button danger>
+              <DeleteOutlined />
+            </Button>
+          </Popconfirm>
+          <Button
+            type="primary"
+            onClick={() => {
+              setCurrentUser(user);
+              setIsDrawerVisible(true);
+            }}
+          >
+            <EditOutlined />
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  // ✅ Lọc user theo tên & trạng thái
+  const filteredData = data?.filter((user) => {
+    const matchesName = user.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus = userFilter ? user.status === userFilter : true;
+    return matchesName && matchesStatus;
+  });
+
+  // ✅ Quản lý Drawer (Thêm/Sửa user)
+  const showDrawer = () => setIsDrawerVisible(true);
+  const onClose = () => {
+    setCurrentUser(null);
+    setIsDrawerVisible(false);
+
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa user này?")) return;
     setIsDeleting(true);
@@ -310,6 +412,7 @@ const UserList = () => {
     } finally {
       setIsDeleting(false);
     }
+
   };
 
   // ✅ Cấu hình cột của bảng
@@ -379,9 +482,10 @@ const UserList = () => {
       {/* ✅ Thanh tiêu đề và nút thêm user */}
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-3xl font-semibold">Quản lý người dùng</h1>
+
         <Button type="default" onClick={showDrawer}>
           <PlusCircleOutlined /> Thêm người dùng
-        </Button>
+
       </div>
 
       {/* ✅ Tìm kiếm và bộ lọc */}
@@ -399,8 +503,13 @@ const UserList = () => {
           onChange={setUserFilter}
         >
           <Select.Option value={null}>Tất cả</Select.Option>
+
+          <Select.Option value="Hoạt động">Hoạt động</Select.Option>
+          <Select.Option value="Ngưng hoạt động">Ngưng Hoạt động</Select.Option>
+
           <Select.Option value="Active">Active</Select.Option>
           <Select.Option value="Deactive">Deactive</Select.Option>
+
         </Select>
       </Space>
 
@@ -420,7 +529,13 @@ const UserList = () => {
         styles={{ body: { padding: 20, height: "100%" } }}
       >
         <div style={{ height: "100%", overflowY: "auto", padding: "20px" }}>
+
+          {currentUser && (
+            <EditUser user={currentUser} userId={currentUser?.id} />
+          )}
+
           {currentUser ? <UserEditPage user={currentUser} /> : <UserAddPage />}
+
         </div>
       </Drawer>
     </div>
@@ -428,4 +543,3 @@ const UserList = () => {
 };
 
 export default UserList;
-

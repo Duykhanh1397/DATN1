@@ -22,5 +22,3 @@ export const changePassword = (data) => API.post("/auth/change-password", data);
 export const getProfile = () => API.get("/auth/profile");
 
 export default API;
-
-

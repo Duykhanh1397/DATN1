@@ -10,11 +10,11 @@ class Category extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $primaryKey = 'category_id';
+    protected $primaryKey = 'id';
     protected $fillable = ['name', 'description', 'status'];
 
     public function products()
     {
-        return $this->hasMany(Product::class, 'category_id');
+        return $this->hasMany(Product::class, 'id');
     }
 }
