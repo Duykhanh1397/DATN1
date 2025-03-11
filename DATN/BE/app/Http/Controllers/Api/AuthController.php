@@ -116,7 +116,7 @@ class AuthController extends Controller
     }
     
 
-    
+
 
 
     /**
@@ -426,7 +426,7 @@ class AuthController extends Controller
 
 /**
 
-//  */
+  */
 // public function resetPassword(Request $request)
 // {
 //     try {
