@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id(); // Laravel tự động tạo khóa chính với tên 'id'
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade'); // Khóa ngoại tham chiếu đến categories
-            $table->string('name');
+            $table->string('name')->unique(); // Đảm bảo tên sản phẩm không trùng lặp
             $table->text('description')->nullable();
             $table->enum('status', ['Hoạt động', 'Ngừng hoạt động'])->default('Hoạt động'); // ENUM status
             $table->timestamps();

@@ -287,9 +287,6 @@ const ChangePassword = () => {
         onClick={() => navigate("/")} 
         style={{ marginTop: "20px", backgroundColor: "gray", color: "white" }}
       >
-
-        ⬅ Quay lại Trang Chủ
-
       </button>
     </div>
   );

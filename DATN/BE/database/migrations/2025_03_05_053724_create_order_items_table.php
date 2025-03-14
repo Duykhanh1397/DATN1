@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('order_items', function (Blueprint $table) {
             $table->id(); // Sử dụng id mặc định làm khóa chính (PK)
-            $table->foreignId('value_id')->constrained('variant_values')->onDelete('cascade'); // FK1
-            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade'); // FK2
-            $table->integer('quantity'); // Số lượng sản phẩm trong đơn hàng
-            $table->decimal('total_price', 12, 2); // Giá trị tổng cộng của sản phẩm (quantity * price)
-            $table->timestamps(); // Các cột created_at và updated_at
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->foreignId('product_variant_id')->constrained('product_variants')->onDelete('cascade'); // ✅ Thay thế variant_values
+            $table->integer('quantity');
+            $table->decimal('total_price', 12, 2);
+            $table->timestamps();
     
             // Các khóa ngoại đã được bao gồm trong phương thức `constrained()`
         });

@@ -60,7 +60,7 @@ function App() {
           <Route path="/register" element={<Register />} /> */}
 
           {/* 🔒 Khu vực user đã đăng nhập */}
-          <Route path="/" element={<PrivateRoute allowedRoles={["Customer", "Admin"]}><Dashboard /></PrivateRoute>} />
+          <Route path="/dashboard" element={<PrivateRoute allowedRoles={["Customer", "Admin"]}><Dashboard /></PrivateRoute>} />
 
           {/* 👑 Khu vực Admin */}
           <Route path="/admin/*" element={<PrivateRoute allowedRoles={["Admin"]}><AdminRoutes /></PrivateRoute>} />

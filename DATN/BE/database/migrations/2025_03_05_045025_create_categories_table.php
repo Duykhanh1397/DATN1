@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id(); // Laravel tự động tạo khóa chính với tên 'id'
-            $table->string('name');
+            $table->string('name')->unique(); // Đảm bảo tên danh mục không bị trùng
             $table->text('description')->nullable();    
             $table->enum('status', ['Hoạt động', 'Ngừng hoạt động'])->default('Hoạt động'); // ENUM status
             $table->timestamps();

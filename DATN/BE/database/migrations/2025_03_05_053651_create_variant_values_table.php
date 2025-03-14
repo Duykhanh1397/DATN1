@@ -13,14 +13,10 @@ return new class extends Migration
     {
         Schema::create('variant_values', function (Blueprint $table) {
             $table->id(); // Laravel tự động tạo khóa chính 'id'
-            $table->foreignId('variant_id')->constrained('product_variants')->onDelete('cascade'); // Khóa ngoại đúng chuẩn
-            $table->string('image_url')->nullable();
-            $table->integer('stock')->default(10);
-            $table->decimal('price', 12, 2);
-            $table->string('color_name')->nullable();
-            $table->string('storage_size')->nullable();
+            $table->foreignId('variant_id')->constrained('variants')->onDelete('cascade'); // ✅ Khóa ngoại tham chiếu đến bảng 'variants'
+            $table->string('value'); // ✅ Giá trị biến thể (ví dụ: Đỏ, Xanh, 128GB)
             $table->timestamps();
-            $table->softDeletes(); // Xóa mềm
+            $table->softDeletes(); // ✅ Xóa mềm
         });
     }
 
