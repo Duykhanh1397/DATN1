@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cart_items', function (Blueprint $table) {
-            $table->id(); // Laravel tự động tạo khóa chính `id`
-            $table->foreignId('cart_id')->constrained('carts')->onDelete('cascade'); // Khóa ngoại liên kết với carts
-            $table->foreignId('value_id')->constrained('variant_values')->onDelete('cascade'); // Khóa ngoại liên kết với product_variants
-            $table->integer('quantity')->default(1);
-            $table->decimal('total_price', 12, 2);
-            $table->timestamps(); // Tạo created_at & updated_at
+            $table->id(); // ID cart item
+            $table->foreignId('cart_id')->constrained('carts')->onDelete('cascade'); // Liên kết với carts
+            $table->foreignId('product_variant_id')->constrained('product_variants')->onDelete('cascade'); // Liên kết với product_variants
+            $table->integer('quantity')->default(1); // Số lượng
+            $table->decimal('total_price', 12, 2)->default(0); // Tổng giá trị mặt hàng
+            $table->timestamps(); // created_at & updated_at
         });
     }
 
