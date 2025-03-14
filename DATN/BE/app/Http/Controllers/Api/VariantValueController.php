@@ -8,53 +8,174 @@ use Illuminate\Http\Request;
 
 class VariantValueController extends Controller
 {
+    /**
+     * 📌 Lấy danh sách các giá trị của một biến thể
+     */
     public function index($variant_id)
     {
-        return response()->json(VariantValue::where('variant_id', $variant_id)->get());
+        $values = VariantValue::with('variant')->where('variant_id', $variant_id)->get();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Danh sách giá trị của biến thể',
+            'data'    => $values
+        ]);
     }
 
+    /**
+     * 📌 Tạo giá trị mới cho một biến thể
+     */
     public function store(Request $request, $variant_id)
     {
-        $request->validate(['price' => 'required|numeric', 'stock' => 'required|integer']);
+        $validatedData = $request->validate([
+            'value' => 'required|string|max:255',
+        ]);
+
         $value = VariantValue::create([
             'variant_id' => $variant_id,
-            'price' => $request->price,
-            'stock' => $request->stock,
-            'color_name' => $request->color_name,
-            'storage_size' => $request->storage_size
+            'value'      => $validatedData['value']
         ]);
-        return response()->json($value, 201);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Thêm giá trị biến thể thành công',
+            'data'    => $value
+        ], 201);
     }
 
+    /**
+     * 📌 Hiển thị chi tiết một giá trị biến thể
+     */
     public function show($id)
     {
-        return response()->json(VariantValue::findOrFail($id));
+        $value = VariantValue::with('variant')->find($id);
+
+        if (!$value) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy giá trị biến thể'
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Chi tiết giá trị biến thể',
+            'data'    => $value
+        ]);
     }
 
+    /**
+     * 📌 Cập nhật giá trị biến thể
+     */
     public function update(Request $request, $id)
     {
-        $value = VariantValue::findOrFail($id);
-        $value->update($request->all());
-        return response()->json($value);
+        $value = VariantValue::find($id);
+
+        if (!$value) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy giá trị biến thể'
+            ], 404);
+        }
+
+        $validatedData = $request->validate([
+            'value' => 'sometimes|string|max:255'
+        ]);
+
+        $value->update($validatedData);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Cập nhật giá trị biến thể thành công',
+            'data'    => $value
+        ]);
     }
 
+    /**
+     * 📌 Xóa mềm giá trị biến thể
+     */
     public function softDelete($id)
     {
-        $value = VariantValue::findOrFail($id);
+        $value = VariantValue::find($id);
+
+        if (!$value) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy giá trị biến thể'
+            ], 404);
+        }
+
         $value->delete();
-        return response()->json(['message' => 'Variant value soft deleted']);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Giá trị biến thể đã được xóa mềm'
+        ]);
     }
 
+    /**
+     * 📌 Khôi phục giá trị biến thể đã xóa mềm
+     */
     public function restore($id)
     {
-        $value = VariantValue::withTrashed()->findOrFail($id);
+        $value = VariantValue::withTrashed()->find($id);
+
+        if (!$value) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy giá trị biến thể để khôi phục'
+            ], 404);
+        }
+
         $value->restore();
-        return response()->json(['message' => 'Variant value restored']);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Giá trị biến thể đã được khôi phục'
+        ]);
     }
-    
+
+    /**
+     * 📌 Lấy danh sách các giá trị biến thể đã bị xóa mềm
+     */
     public function trashed()
     {
-        return response()->json(VariantValue::onlyTrashed()->get());
+        $trashedValues = VariantValue::onlyTrashed()->get();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Danh sách giá trị biến thể đã xóa mềm',
+            'data'    => $trashedValues
+        ]);
+    }
+
+    /**
+     * 📌 Xóa vĩnh viễn giá trị biến thể (⚠️ Kiểm tra liên kết trước khi xóa)
+     */
+    public function forceDelete($id)
+    {
+        $value = VariantValue::withTrashed()->find($id);
+
+        if (!$value) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy giá trị biến thể'
+            ], 404);
+        }
+
+        // ⚠️ Kiểm tra nếu còn sản phẩm đang sử dụng giá trị này
+        if ($value->productVariants()->exists()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không thể xóa giá trị biến thể vì đang được sử dụng'
+            ], 400);
+        }
+
+        $value->forceDelete();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Giá trị biến thể đã bị xóa vĩnh viễn'
+        ]);
     }
 }
-

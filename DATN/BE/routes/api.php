@@ -160,7 +160,6 @@
 
 
 
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
     AuthController,
@@ -168,6 +167,7 @@ use App\Http\Controllers\Api\{
     CategoryController,
     ProductController,
     ProductVariantController,
+    VariantController,
     VariantValueController,
     VariantImageController,
     VoucherController,
@@ -188,17 +188,16 @@ use App\Http\Controllers\Api\{
 Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('register', 'RegisterUser');
     Route::post('login', 'loginUser');
-    Route::post('forgot-password', 'forgotPassword')->name('password.email');  // Đặt tên route này để Laravel nhận diện
-    Route::post('reset-password', 'resetPassword')->name('password.update');  // Đặt tên cho reset-password
+    Route::post('forgot-password', 'forgotPassword')->name('password.email');
+    Route::post('reset-password', 'resetPassword')->name('password.update');
 });
-// Định nghĩa route reset mật khẩu của Laravel
 Route::get('reset-password/{token}', function ($token) {
     return response()->json(['token' => $token]);
 })->name('password.reset');
 
 // ✅ **Protected Routes (Require Auth)**
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     // 🔐 **User Authentication**
     Route::prefix('auth')->controller(AuthController::class)->group(function () {
         Route::post('logout', 'logout');
@@ -238,6 +237,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [OrderItemController::class, 'index']);
             Route::post('/', [OrderItemController::class, 'store']);
         });
+
+       
+       
     });
 
     Route::prefix('order/item')->group(function () {
@@ -245,7 +247,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('{orderItemId}', [OrderItemController::class, 'destroy']);
     });
 
-    // 💳 **Payment Routes**
+
+
+    // 💳 **Payment Routes (VNPay + COD)**
     Route::prefix('payment')->group(function () {
         Route::post('{orderId}', [PaymentController::class, 'payment']);
         Route::get('{orderId}/status', [PaymentController::class, 'paymentResult']);
@@ -253,7 +257,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 🔥 **Admin Routes**
     Route::middleware('role:Admin')->prefix('admin')->group(function () {
-        
+
         // 📂 **Category Management**
         Route::apiResource('categories', CategoryController::class);
         Route::prefix('categories')->group(function () {
@@ -271,11 +275,20 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // 🎨 **Product Variants**
-        Route::apiResource('products/{product}/variants', ProductVariantController::class);
-        Route::prefix('variants')->group(function () {
-            Route::delete('{variant}/soft', [ProductVariantController::class, 'softDelete']);
-            Route::post('{variant}/restore', [ProductVariantController::class, 'restore']);
+        Route::apiResource('products/{product}/productvariants', ProductVariantController::class);
+        Route::prefix('productvariants')->group(function () {
+            Route::delete('{productvariant}/soft', [ProductVariantController::class, 'softDelete']);
+            Route::post('{productvariant}/restore', [ProductVariantController::class, 'restore']);
             Route::get('{product}/trashed', [ProductVariantController::class, 'trashed']);
+        });
+
+
+        // 🎭 **Variant Types**
+        Route::apiResource('variants', VariantController::class);
+        Route::prefix('variants')->group(function () {
+            Route::delete('{variant}/soft', [VariantController::class, 'softDelete']);
+            Route::post('{variant}/restore', [VariantController::class, 'restore']);
+            Route::get('trashed', [VariantController::class, 'trashed']);
         });
 
         // 🎭 **Variant Values**
