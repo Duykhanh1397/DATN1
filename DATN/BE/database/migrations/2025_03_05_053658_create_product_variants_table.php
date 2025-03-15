@@ -9,11 +9,14 @@ return new class extends Migration {
     {
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id(); // Khóa chính
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade'); // Khóa ngoại đến bảng sản phẩm
-            $table->foreignId('variant_value_id')->constrained('variant_values')->onDelete('cascade'); // Khóa ngoại đến giá trị biến thể
-            $table->decimal('price', 10, 2)->default(0); // Giá của biến thể
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade'); // FK tới sản phẩm
+
+            $table->json('variant_value_ids'); // Lưu danh sách ID biến thể (màu, dung lượng,...)
+
+            $table->decimal('price', 10, 2)->default(0); // Giá
             $table->integer('stock')->default(0); // Số lượng tồn kho
-            $table->string('image')->nullable(); // Ảnh sản phẩm
+            $table->string('image')->nullable(); // Ảnh biến thể
+
             $table->timestamps();
             $table->softDeletes(); // Xóa mềm
         });
@@ -24,4 +27,3 @@ return new class extends Migration {
         Schema::dropIfExists('product_variants');
     }
 };
-
