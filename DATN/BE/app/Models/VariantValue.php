@@ -24,7 +24,7 @@ class VariantValue extends Model
     // ✅ Quan hệ với bảng `variants`
     public function productVariants()
     {
-        return $this->hasMany(ProductVariant::class, 'variant_value_id');
+        return $this->hasMany(ProductVariant::class, 'variant_value_ids');
     }
 
     // ✅ Quan hệ với bảng `variants` (Mô tả loại biến thể)

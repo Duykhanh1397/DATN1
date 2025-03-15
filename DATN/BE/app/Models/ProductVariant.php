@@ -27,6 +27,8 @@
 
 
 
+
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,14 +43,15 @@ class ProductVariant extends Model
 
     protected $fillable = [
         'product_id',        // Liên kết sản phẩm
-        'variant_value_id',  // Liên kết giá trị biến thể
+        'variant_value_ids',  // Liên kết giá trị biến thể
         'price',             // Giá của biến thể
         'stock',             // Số lượng tồn kho
         'image',             // Ảnh biến thể (nếu có)
     ];
 
     protected $casts = [
-        'deleted_at' => 'datetime', // Xử lý `deleted_at` thành kiểu datetime
+        'deleted_at' => 'datetime',// Xử lý `deleted_at` thành kiểu datetime
+        'variant_value_ids' => 'array',  // Chuyển về dạng mảng khi lấy từ DB
     ];
 
     // ✅ Quan hệ với bảng `products`
@@ -60,7 +63,7 @@ class ProductVariant extends Model
     // ✅ Quan hệ với bảng `variant_values` (Dùng `variant_value_id` để kết nối)
     public function variantValue()
     {
-        return $this->belongsTo(VariantValue::class, 'variant_value_id');
+        return VariantValue::whereIn('id', json_decode($this->variant_value_ids, true))->get();
     }
 
     // ✅ Scope: Lọc biến thể theo sản phẩm cụ thể
@@ -69,5 +72,6 @@ class ProductVariant extends Model
         return $query->where('product_id', $productId);
     }
 }
+
 
 
