@@ -33,9 +33,7 @@ const CategoryEdit = ({ category }) => {
         form={form}
         initialValues={{ ...category }}
         name="basic"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 16 }}
-        style={{ maxWidth: 600 }}
+        layout="vertical"
         onFinish={(formData) => {
           mutate(formData);
         }}
@@ -63,7 +61,7 @@ const CategoryEdit = ({ category }) => {
           <Select>
             <Select.Option value="Hoạt động">Hoạt động</Select.Option>
             <Select.Option value="Ngưng hoạt động">
-              Ngưng Hoạt động
+              Ngưng hoạt động
             </Select.Option>
           </Select>
         </Form.Item>

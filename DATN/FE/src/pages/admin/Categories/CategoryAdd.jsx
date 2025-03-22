@@ -19,8 +19,7 @@ const CategoryAdd = () => {
       form.resetFields();
     },
     onError: (error) => {
-      messageApi.error("Cập nhật thất bại: " + error.message);
-      console.error("API Error:", error);
+      messageApi.error("Thêm danh mục thất bại: " + error.message);
     },
   });
 
@@ -30,10 +29,7 @@ const CategoryAdd = () => {
       <h1 className="text-3xl font-semibold mb-5">Thêm mới danh mục</h1>
       <Form
         form={form}
-        name="basic"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 16 }}
-        style={{ maxWidth: 600 }}
+        layout="vertical"
         onFinish={(formData) => mutate(formData)}
       >
         <Form.Item
