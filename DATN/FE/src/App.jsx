@@ -147,7 +147,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext"; // ✅ Đảm bảo AuthProvider load trước
+// import PrivateRoute from "./routes/PrivateRoute";
+// import AdminRoutes from "./routes/AdminRoutes";
 
 // 🌍 Website Pages
 import Websitelayout from "./pages/website/layouts/Websitelayout.jsx";
@@ -172,11 +174,7 @@ import EditUser from "./pages/admin/Users/EditUser.jsx";
 import ViewUser from "./pages/admin/Users/ViewUser.jsx";
 import DeletedUsers from "./pages/admin/Users/DeletedUsers.jsx";
 import CategoryList from "./pages/admin/Categories/CategoryList.jsx";
-import CartPage from "./pages/website/cart/CartPage.jsx";
-import ProductList from "./pages/admin/Products/ProductList.jsx";
-import OrderPage from "./pages/admin/Orders/OrderPage.jsx";
-import DeletedProductsList from "./pages/admin/Products/DeletedProductsList .jsx";
-import OrderDetail from "./pages/admin/Orders/OrderDetailPage.jsx";
+import OrderList from "./pages/admin/Orders/OrderList.jsx";
 
 // ✅ Tạo một QueryClient mới
 const queryClient = new QueryClient();
@@ -190,12 +188,10 @@ function App() {
             {/* 🌍 Layout Website */}
             <Route path="/" element={<Websitelayout />}>
               <Route index element={<Home />} />{" "}
-              {/* ✅ Fix lỗi đường dẫn `/` */}
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="reset-password" element={<ResetPassword />} />
-              <Route path="cart" element={<CartPage />} />
             </Route>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<DashboardPage />} />
@@ -205,11 +201,36 @@ function App() {
               <Route path="users/view/:id" element={<ViewUser />} />
               <Route path="users/deleted" element={<DeletedUsers />} />
               <Route path="categories" element={<CategoryList />} />
-              <Route path="products" element={<ProductList />} />
-              <Route path="products/delete" element={<DeletedProductsList />} />
-              <Route path="orders" element={<OrderPage />} />
-              <Route path="orders/:orderId" element={<OrderDetail />} />
+              <Route path="orders" element={<OrderList />} />
             </Route>
+
+            {/* 🔒 User Protected Routes */}
+            {/* <Route path="/dashboard" element={
+              <PrivateRoute allowedRoles={["Customer", "Admin"]}>
+                <Dashboard />
+              </PrivateRoute>
+            } /> */}
+
+            {/* <Route path="/profile" element={
+              <PrivateRoute allowedRoles={["Customer", "Admin"]}>
+                <Profile />
+              </PrivateRoute>
+            } /> */}
+
+            {/* <Route path="/change-password" element={
+              <PrivateRoute allowedRoles={["Customer", "Admin"]}>
+                <ChangePassword />
+              </PrivateRoute>
+            } /> */}
+
+            {/* 👑 Admin Routes */}
+            {/* <Route path="/admin/*" element={
+              <PrivateRoute allowedRoles={["Admin"]}>
+                <AdminRoutes />
+              </PrivateRoute>
+            } /> */}
+
+            {/* ❌ 404 Page */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
