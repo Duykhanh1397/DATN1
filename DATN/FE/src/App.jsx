@@ -148,8 +148,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext"; // ✅ Đảm bảo AuthProvider load trước
-import PrivateRoute from "./routes/PrivateRoute";
-import AdminRoutes from "./routes/AdminRoutes";
+// import PrivateRoute from "./routes/PrivateRoute";
+// import AdminRoutes from "./routes/AdminRoutes";
 
 // 🌍 Website Pages
 import Websitelayout from "./pages/website/layouts/Websitelayout.jsx";
@@ -174,6 +174,7 @@ import EditUser from "./pages/admin/Users/EditUser.jsx";
 import ViewUser from "./pages/admin/Users/ViewUser.jsx";
 import DeletedUsers from "./pages/admin/Users/DeletedUsers.jsx";
 import CategoryList from "./pages/admin/Categories/CategoryList.jsx";
+import OrderList from "./pages/admin/Orders/OrderList.jsx";
 
 // ✅ Tạo một QueryClient mới
 const queryClient = new QueryClient();
@@ -187,7 +188,6 @@ function App() {
             {/* 🌍 Layout Website */}
             <Route path="/" element={<Websitelayout />}>
               <Route index element={<Home />} />{" "}
-              {/* ✅ Fix lỗi đường dẫn `/` */}
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
@@ -201,7 +201,7 @@ function App() {
               <Route path="users/view/:id" element={<ViewUser />} />
               <Route path="users/deleted" element={<DeletedUsers />} />
               <Route path="categories" element={<CategoryList />} />
-              <Route path="products" element={<CategoryList />} />
+              <Route path="orders" element={<OrderList />} />
             </Route>
 
             {/* 🔒 User Protected Routes */}

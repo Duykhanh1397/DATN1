@@ -33,7 +33,7 @@ const CategoryList = () => {
     queryKey: ["CATEGORIES_KEY"],
     queryFn: async () => {
       const { data } = await API.get("/admin/categories");
-      return data.map((item, index) => ({
+      return data.data.map((item, index) => ({
         ...item,
         key: item.id,
         stt: index + 1,
@@ -42,14 +42,14 @@ const CategoryList = () => {
   });
   const { mutate } = useMutation({
     mutationFn: async (id) => {
-      await API.delete(`/admin/categories/${id}`);
+      await API.delete(`/admin/categories/${id}/soft`);
     },
     onSuccess: () => {
       messageApi.success("Xóa danh mục thành công");
       queryClient.invalidateQueries({ queryKey: ["CATEGORIES_KEY"] });
     },
     onError: () => {
-      messageApi.error("Không thể xóa người dùng.");
+      messageApi.error("Không thể xóa danh mục!");
     },
   });
   const columns = [
@@ -76,7 +76,7 @@ const CategoryList = () => {
     },
     {
       key: "action",
-      width: 200,
+      align: "center",
       render: (_, item) => (
         <Space>
           <Popconfirm
@@ -86,7 +86,7 @@ const CategoryList = () => {
             okText="Có"
             cancelText="Không"
           >
-            <Button danger>
+            <Button danger size="small">
               <DeleteOutlined />
             </Button>
           </Popconfirm>
@@ -96,6 +96,7 @@ const CategoryList = () => {
               setCurrentCategory(item);
               setIsDrawerVisible(true);
             }}
+            size="small"
           >
             <EditOutlined />
           </Button>
@@ -145,7 +146,7 @@ const CategoryList = () => {
         >
           <Select.Option value={null}>Tất cả</Select.Option>
           <Select.Option value="Hoạt động">Hoạt động</Select.Option>
-          <Select.Option value="Ngưng hoạt động">Ngưng Hoạt động</Select.Option>
+          <Select.Option value="Ngưng hoạt động">Ngưng hoạt động</Select.Option>
         </Select>
       </Space>
       <Skeleton loading={isLoading} active>
