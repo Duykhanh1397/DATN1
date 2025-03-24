@@ -95,8 +95,8 @@
 
 //     // Đổi Mật Khẩu
 //     Route::post('/auth/change-password', [AuthController::class, 'changePassword'])->name('auth.change-password');
-  
-    
+
+
 
 //     // Lấy Thông Tin Người Dùng
 //     Route::get('/auth/profile', [AuthController::class, 'profile'])->name('auth.profile');
@@ -133,7 +133,7 @@
 
 // // **Protected Routes (Require Auth)**
 // Route::middleware(['auth:sanctum'])->group(function () {
-    
+
 //     Route::prefix('auth')->controller(AuthController::class)->group(function () {
 //         Route::post('/logout', 'logout')->name('auth.logout');
 //         Route::post('/change-password', 'changePassword')->name('auth.change-password');
@@ -151,9 +151,168 @@
 
 
 
-        
+
 //     });
 // });
+
+
+
+
+
+
+
+// use Illuminate\Support\Facades\Route;
+// use App\Http\Controllers\Api\{
+//     AuthController,
+//     UserController,
+//     CategoryController,
+//     ProductController,
+//     ProductVariantController,
+//     VariantValueController,
+//     VariantImageController,
+//     VoucherController,
+//     CartController,
+//     CartItemController,
+//     OrderController,
+//     OrderItemController,
+//     PaymentController
+// };
+
+// /*
+// |--------------------------------------------------------------------------
+// | API Routes
+// |--------------------------------------------------------------------------
+// */
+
+// // 🚀 **Authentication Routes**
+// Route::prefix('auth')->controller(AuthController::class)->group(function () {
+//     Route::post('register', 'RegisterUser');
+//     Route::post('login', 'loginUser');
+//     Route::post('forgot-password', 'forgotPassword')->name('password.email');  // Đặt tên route này để Laravel nhận diện
+//     Route::post('reset-password', 'resetPassword')->name('password.update');  // Đặt tên cho reset-password
+// });
+// // Định nghĩa route reset mật khẩu của Laravel
+// Route::get('reset-password/{token}', function ($token) {
+//     return response()->json(['token' => $token]);
+// })->name('password.reset');
+
+// // ✅ **Protected Routes (Require Auth)**
+// Route::middleware('auth:sanctum')->group(function () {
+
+//     // 🔐 **User Authentication**
+//     Route::prefix('auth')->controller(AuthController::class)->group(function () {
+//         Route::post('logout', 'logout');
+//         Route::post('change-password', 'changePassword');
+//         Route::get('profile', 'profile');
+//     });
+
+//     // 👤 **User Management (Admin)**
+//     Route::middleware('role:Admin')->prefix('admin')->group(function () {
+//         Route::apiResource('users', UserController::class);
+//         Route::get('users/deleted', [UserController::class, 'getDeletedUsers']);
+//         Route::post('users/{id}/restore', [UserController::class, 'restore']);
+//         Route::delete('users/{id}/force-delete', [UserController::class, 'forceDelete']);
+//     });
+
+//     // 🛒 **Cart & Cart Items**
+//     Route::prefix('cart')->group(function () {
+//         Route::get('/', [CartItemController::class, 'index']);
+//         Route::delete('{cartId}', [CartController::class, 'destroy']);
+//         Route::prefix('items')->group(function () {
+//             Route::get('/', [CartItemController::class, 'index']);
+//             Route::post('/', [CartItemController::class, 'store']);
+//             Route::put('{cartItemId}', [CartItemController::class, 'update']);
+//             Route::delete('{cartItemId}', [CartItemController::class, 'destroy']);
+//         });
+//     });
+
+//     // 🎟 **Voucher Routes**
+//     Route::post('vouchers/apply', [VoucherController::class, 'applyVoucher']);
+
+//     // 📦 **Order Routes**
+//     Route::prefix('orders')->group(function () {
+//         Route::post('/', [OrderController::class, 'create']);
+//         Route::put('{orderId}/cancel', [OrderController::class, 'cancelOrder']);
+//         Route::get('{orderId}', [OrderController::class, 'show']);
+//         Route::prefix('{orderId}/items')->group(function () {
+//             Route::get('/', [OrderItemController::class, 'index']);
+//             Route::post('/', [OrderItemController::class, 'store']);
+//         });
+//     });
+
+//     Route::prefix('order/item')->group(function () {
+//         Route::put('{orderItemId}', [OrderItemController::class, 'update']);
+//         Route::delete('{orderItemId}', [OrderItemController::class, 'destroy']);
+//     });
+
+//     // 💳 **Payment Routes**
+//     Route::prefix('payment')->group(function () {
+//         Route::post('{orderId}', [PaymentController::class, 'payment']);
+//         Route::get('{orderId}/status', [PaymentController::class, 'paymentResult']);
+//     });
+
+//     // 🔥 **Admin Routes**
+//     Route::middleware('role:Admin')->prefix('admin')->group(function () {
+
+//         // 📂 **Category Management**
+//         Route::apiResource('categories', CategoryController::class);
+//         Route::prefix('categories')->group(function () {
+//             Route::delete('{category}/soft', [CategoryController::class, 'softDelete']);
+//             Route::post('{category}/restore', [CategoryController::class, 'restore']);
+//             Route::get('trashed', [CategoryController::class, 'trashed']);
+//         });
+
+//         // 🛍 **Product Management**
+//         Route::apiResource('products', ProductController::class);
+//         Route::prefix('products')->group(function () {
+//             Route::delete('{product}/soft', [ProductController::class, 'softDelete']);
+//             Route::post('{product}/restore', [ProductController::class, 'restore']);
+//             Route::get('trashed', [ProductController::class, 'trashed']);
+//         });
+
+//         // 🎨 **Product Variants**
+//         Route::apiResource('products/{product}/variants', ProductVariantController::class);
+//         Route::prefix('variants')->group(function () {
+//             Route::delete('{variant}/soft', [ProductVariantController::class, 'softDelete']);
+//             Route::post('{variant}/restore', [ProductVariantController::class, 'restore']);
+//             Route::get('{product}/trashed', [ProductVariantController::class, 'trashed']);
+//         });
+
+//         // 🎭 **Variant Values**
+//         Route::apiResource('variants/{variant}/values', VariantValueController::class);
+//         Route::prefix('values')->group(function () {
+//             Route::delete('{value}/soft', [VariantValueController::class, 'softDelete']);
+//             Route::post('{value}/restore', [VariantValueController::class, 'restore']);
+//             Route::get('{variant}/trashed', [VariantValueController::class, 'trashed']);
+//         });
+
+//         // 📸 **Product Images**
+//         Route::apiResource('products/{product}/images', VariantImageController::class);
+//         Route::prefix('images')->group(function () {
+//             Route::delete('{image}/soft', [VariantImageController::class, 'softDelete']);
+//             Route::post('{image}/restore', [VariantImageController::class, 'restore']);
+//             Route::get('trashed', [VariantImageController::class, 'trashed']);
+//         });
+
+//         // 🎟 **Voucher Management**
+//         Route::apiResource('vouchers', VoucherController::class);
+//         Route::prefix('vouchers')->group(function () {
+//             Route::delete('{id}/soft', [VoucherController::class, 'softDelete']);
+//             Route::post('{id}/restore', [VoucherController::class, 'restore']);
+//             Route::get('trashed', [VoucherController::class, 'trashed']);
+//         });
+
+//         // 📦 **Admin Order Management**
+//         Route::prefix('orders')->group(function () {
+//             Route::get('/', [OrderController::class, 'index']);
+//             Route::put('{orderId}/update-status', [OrderController::class, 'updateStatus']);
+//         });
+//     });
+// });
+
+
+
+
 
 
 
@@ -167,79 +326,73 @@ use App\Http\Controllers\Api\{
     CategoryController,
     ProductController,
     ProductVariantController,
-    VariantController,
-    VariantValueController,
+    VariantColorController,
+    VariantStorageController,
     VariantImageController,
     VoucherController,
     CartController,
     CartItemController,
     OrderController,
     OrderItemController,
+    OrderStatusHistoryController,
+    ReviewController,
     PaymentController
 };
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
-
-// 🚀 **Authentication Routes**
+// ✅ Authentication
 Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('register', 'RegisterUser');
     Route::post('login', 'loginUser');
     Route::post('forgot-password', 'forgotPassword')->name('password.email');
     Route::post('reset-password', 'resetPassword')->name('password.update');
 });
-Route::get('reset-password/{token}', function ($token) {
-    return response()->json(['token' => $token]);
-})->name('password.reset');
+Route::get('reset-password/{token}', fn($token) => response()->json(['token' => $token]))->name('password.reset');
 
-// ✅ **Protected Routes (Require Auth)**
+// ✅ Guest - Check đơn hàng không cần đăng nhập
+Route::get('orders/guest/check', [OrderController::class, 'guestCheckOrder']); // ✅ Tra cứu đơn hàng cho khách vãng lai
+
+// ✅ Protected Routes (Auth + Role)
 Route::middleware('auth:sanctum')->group(function () {
 
-    // 🔐 **User Authentication**
+    // ✅ User Profile + Auth
     Route::prefix('auth')->controller(AuthController::class)->group(function () {
         Route::post('logout', 'logout');
         Route::post('change-password', 'changePassword');
         Route::get('profile', 'profile');
     });
 
-    // 👤 **User Management (Admin)**
-    Route::middleware('role:Admin')->prefix('admin')->group(function () {
-        Route::apiResource('users', UserController::class);
-        Route::get('users/deleted', [UserController::class, 'getDeletedUsers']);
-        Route::post('users/{id}/restore', [UserController::class, 'restore']);
-        Route::delete('users/{id}/force-delete', [UserController::class, 'forceDelete']);
-    });
-
-    // 🛒 **Cart & Cart Items**
+    // ✅ Cart
     Route::prefix('cart')->group(function () {
         Route::get('/', [CartItemController::class, 'index']);
         Route::delete('{cartId}', [CartController::class, 'destroy']);
+
         Route::prefix('items')->group(function () {
             Route::get('/', [CartItemController::class, 'index']);
             Route::post('/', [CartItemController::class, 'store']);
             Route::put('{cartItemId}', [CartItemController::class, 'update']);
             Route::delete('{cartItemId}', [CartItemController::class, 'destroy']);
+
+            // ✅ Thêm route tăng/giảm số lượng sản phẩm
+            Route::put('{cartItemId}/increase', [CartItemController::class, 'increase']);
+            Route::put('{cartItemId}/decrease', [CartItemController::class, 'decrease']);
         });
     });
 
-    // 🎟 **Voucher Routes**
+    // ✅ Voucher
     Route::post('vouchers/apply', [VoucherController::class, 'applyVoucher']);
 
-    // 📦 **Order Routes**
+    // ✅ Orders
     Route::prefix('orders')->group(function () {
-        Route::post('/', [OrderController::class, 'create']);
+        Route::get('/', [OrderController::class, 'userOrders']);
+        Route::post('/', [OrderController::class, 'create']);   // ✅ Đặt hàng
         Route::put('{orderId}/cancel', [OrderController::class, 'cancelOrder']);
-        Route::get('{orderId}', [OrderController::class, 'show']);
+        Route::get('{orderId}', [OrderController::class, 'show']); // ✅ Xem chi tiết đơn hàng của mình
+
         Route::prefix('{orderId}/items')->group(function () {
             Route::get('/', [OrderItemController::class, 'index']);
             Route::post('/', [OrderItemController::class, 'store']);
         });
-
-       
-       
+        Route::get('{orderId}/status-history', [OrderStatusHistoryController::class, 'index']);
     });
 
     Route::prefix('order/item')->group(function () {
@@ -247,18 +400,30 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('{orderItemId}', [OrderItemController::class, 'destroy']);
     });
 
+    // ✅ Reviews
+    Route::prefix('reviews')->group(function () {
+        Route::get('product/{productId}', [ReviewController::class, 'index']);
+        Route::post('product/{productId}', [ReviewController::class, 'store']);
+        Route::put('{reviewId}', [ReviewController::class, 'update']);
+        Route::delete('{reviewId}', [ReviewController::class, 'destroy']);
+    });
 
-
-    // 💳 **Payment Routes (VNPay + COD)**
+    // ✅ Payment (VNPay / COD)
     Route::prefix('payment')->group(function () {
         Route::post('{orderId}', [PaymentController::class, 'payment']);
         Route::get('{orderId}/status', [PaymentController::class, 'paymentResult']);
     });
 
-    // 🔥 **Admin Routes**
+    // ✅ Admin Only
     Route::middleware('role:Admin')->prefix('admin')->group(function () {
 
-        // 📂 **Category Management**
+        // ✅ Users Management
+        Route::apiResource('users', UserController::class);
+        Route::get('users/deleted', [UserController::class, 'getDeletedUsers']);
+        Route::post('users/{id}/restore', [UserController::class, 'restore']);
+        Route::delete('users/{id}/force-delete', [UserController::class, 'forceDelete']);
+
+        // ✅ Category Management
         Route::apiResource('categories', CategoryController::class);
         Route::prefix('categories')->group(function () {
             Route::delete('{category}/soft', [CategoryController::class, 'softDelete']);
@@ -266,48 +431,56 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('trashed', [CategoryController::class, 'trashed']);
         });
 
-        // 🛍 **Product Management**
+        // ✅ Product Management
         Route::apiResource('products', ProductController::class);
         Route::prefix('products')->group(function () {
             Route::delete('{product}/soft', [ProductController::class, 'softDelete']);
             Route::post('{product}/restore', [ProductController::class, 'restore']);
             Route::get('trashed', [ProductController::class, 'trashed']);
+            Route::put('/products/{id}', [ProductController::class, 'update']);
+
         });
 
-        // 🎨 **Product Variants**
+        // ✅ Product Variant Management (Color + Storage)
         Route::apiResource('products/{product}/productvariants', ProductVariantController::class);
         Route::prefix('productvariants')->group(function () {
+            Route::get('/', [ProductVariantController::class, 'getAllProductVariants']);
             Route::delete('{productvariant}/soft', [ProductVariantController::class, 'softDelete']);
             Route::post('{productvariant}/restore', [ProductVariantController::class, 'restore']);
             Route::get('{product}/trashed', [ProductVariantController::class, 'trashed']);
+            Route::delete('{productvariant}/force-delete', [ProductVariantController::class, 'forceDelete']);
+            Route::get('{id}', [ProductVariantController::class, 'show'])->name('productvariants.show');
+            Route::put('{variant}', [ProductVariantController::class, 'update']);
         });
 
 
-        // 🎭 **Variant Types**
-        Route::apiResource('variants', VariantController::class);
-        Route::prefix('variants')->group(function () {
-            Route::delete('{variant}/soft', [VariantController::class, 'softDelete']);
-            Route::post('{variant}/restore', [VariantController::class, 'restore']);
-            Route::get('trashed', [VariantController::class, 'trashed']);
+        // ✅ Variant Color Management
+        Route::apiResource('variantcolor', VariantColorController::class);
+        Route::prefix('variantcolor')->group(function () {
+            Route::delete('{id}/soft', [VariantColorController::class, 'destroy']);
+            Route::post('{id}/restore', [VariantColorController::class, 'restore']);
+            Route::get('trashed', [VariantColorController::class, 'trashed']);
+            Route::delete('{id}/force-delete', [VariantColorController::class, 'forceDelete']);
         });
 
-        // 🎭 **Variant Values**
-        Route::apiResource('variants/{variant}/values', VariantValueController::class);
-        Route::prefix('values')->group(function () {
-            Route::delete('{value}/soft', [VariantValueController::class, 'softDelete']);
-            Route::post('{value}/restore', [VariantValueController::class, 'restore']);
-            Route::get('{variant}/trashed', [VariantValueController::class, 'trashed']);
+        // ✅ Variant Storage Management
+        Route::apiResource('variantstorage', VariantStorageController::class);
+        Route::prefix('variantstorage')->group(function () {
+            Route::delete('{id}/soft', [VariantStorageController::class, 'destroy']);
+            Route::post('{id}/restore', [VariantStorageController::class, 'restore']);
+            Route::get('trashed', [VariantStorageController::class, 'trashed']);
+            Route::delete('{id}/force-delete', [VariantStorageController::class, 'forceDelete']);
         });
 
-        // 📸 **Product Images**
-        Route::apiResource('products/{product}/images', VariantImageController::class);
-        Route::prefix('images')->group(function () {
+        // ✅ Product Variant Images
+        Route::apiResource('productvariants/{product_variant}/images', VariantImageController::class); // Sử dụng mối quan hệ product_variant
+        Route::prefix('productvariants/{product_variant}/images')->group(function () {
             Route::delete('{image}/soft', [VariantImageController::class, 'softDelete']);
             Route::post('{image}/restore', [VariantImageController::class, 'restore']);
             Route::get('trashed', [VariantImageController::class, 'trashed']);
         });
 
-        // 🎟 **Voucher Management**
+        // ✅ Voucher Management
         Route::apiResource('vouchers', VoucherController::class);
         Route::prefix('vouchers')->group(function () {
             Route::delete('{id}/soft', [VoucherController::class, 'softDelete']);
@@ -315,7 +488,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('trashed', [VoucherController::class, 'trashed']);
         });
 
-        // 📦 **Admin Order Management**
+        // ✅ Admin Order Management
         Route::prefix('orders')->group(function () {
             Route::get('/', [OrderController::class, 'index']);
             Route::put('{orderId}/update-status', [OrderController::class, 'updateStatus']);

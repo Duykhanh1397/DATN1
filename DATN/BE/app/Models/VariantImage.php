@@ -13,23 +13,32 @@ class VariantImage extends Model
     protected $table = 'variant_images'; // Xác định đúng bảng
 
     protected $fillable = [
-        'product_id',  // Liên kết sản phẩm
-        'image_url'    // Đường dẫn ảnh
+        'product_variant_id', // Liên kết với biến thể sản phẩm (không phải sản phẩm trực tiếp)
+        'image_url'           // Đường dẫn ảnh
     ];
 
     protected $casts = [
         'deleted_at' => 'datetime', // Xử lý ngày xóa mềm
     ];
 
-    // ✅ Quan hệ với `products`
-    public function product()
+    // ✅ Quan hệ với `ProductVariant`
+    public function productVariant()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id'); // Liên kết với product_variant
     }
 
-    // ✅ Scope: Lọc ảnh theo sản phẩm
-    public function scopeByProduct($query, $productId)
+    // ✅ Scope: Lọc ảnh theo biến thể sản phẩm (product_variant)
+    public function scopeByProductVariant($query, $productVariantId)
     {
-        return $query->where('product_id', $productId);
+        return $query->where('product_variant_id', $productVariantId); // Lọc theo biến thể sản phẩm
     }
+
+    protected $appends = ['image_url'];
+
+public function getImageUrlAttribute($value)
+{
+    return asset('storage/' . $this->attributes['image_url']);
+}
+
+
 }

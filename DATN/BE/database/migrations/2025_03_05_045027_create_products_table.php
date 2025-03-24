@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade'); // Khóa ngoại tham chiếu đến categories
             $table->string('name')->unique(); // Đảm bảo tên sản phẩm không trùng lặp
             $table->text('description')->nullable();
-            $table->enum('status', ['Hoạt động', 'Ngừng hoạt động'])->default('Hoạt động'); // ENUM status
+            $table->enum('status', ['Hoạt động', 'Ngưng hoạt động'])->default('Hoạt động'); // ENUM status
+            $table->decimal('price', 15, 2); // Giá sản phẩm
+            $table->string('image')->nullable(); // Hình ảnh sản phẩm
             $table->timestamps();
             $table->softDeletes(); // Xóa mềm (deleted_at)
         });
@@ -30,3 +32,4 @@ return new class extends Migration
         Schema::dropIfExists('products');
     }
 };
+

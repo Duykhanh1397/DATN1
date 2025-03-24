@@ -119,156 +119,195 @@
 //     }
 // }
 
+
+
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-
-use App\Http\Controllers;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 class VoucherController extends Controller
 {
     /**
-     *  Lấy danh sách tất cả voucher (chỉ Admin)
+     * 📌 Lấy danh sách tất cả voucher (Admin)
      */
     public function index()
     {
-        return response()->json(Voucher::all());
+        return response()->json([
+            'status' => true,
+            'message' => 'Danh sách voucher',
+            'data' => Voucher::all()
+        ]);
     }
 
     /**
-     * Tạo voucher mới (chỉ Admin)
+     * 📌 Tạo mới voucher (Admin)
      */
     public function store(Request $request)
     {
         $request->validate([
-            'code' => 'required|string|unique:vouchers',
-            'discount_type' => 'required|in:percentage,fixed',
-            'discount_value' => 'required|numeric|min:0',
+            'code'            => 'required|string|unique:vouchers,code',
+            'description'     => 'nullable|string',
+            'discount_type'   => 'required|in:percentage,fixed',
+            'discount_value'  => 'required|numeric|min:0|max:100',
             'min_order_value' => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
-            'usage_limit' => 'required|integer|min:1',
-            'status' => 'required|in:active,expired,disabled'
+            'max_discount'    => 'nullable|numeric|min:0',
+            'usage_limit'     => 'required|integer|min:1',
+            'status'          => 'required|in:Hoạt động,Ngưng hoạt động,Hết hạn'
         ]);
 
+        $validated['status'] = $validated['status'] ?? 'Hoạt động';
+        
         $voucher = Voucher::create($request->all());
-        return response()->json(['message' => 'Voucher created successfully', 'data' => $voucher], 201);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Tạo voucher thành công',
+            'data' => $voucher
+        ], 201);
     }
 
     /**
-     * Lấy thông tin voucher cụ thể (chỉ Admin)
+     * 📌 Xem chi tiết voucher (Admin)
      */
     public function show($id)
     {
-        return response()->json(Voucher::findOrFail($id));
+        $voucher = Voucher::findOrFail($id);
+        return response()->json([
+            'status' => true,
+            'data' => $voucher
+        ]);
     }
 
     /**
-     *  Cập nhật voucher (chỉ Admin)
+     * 📌 Cập nhật voucher (Admin)
      */
     public function update(Request $request, $id)
     {
         $voucher = Voucher::findOrFail($id);
 
         $request->validate([
-            'code' => 'string|unique:vouchers,code,' . $id,
-            'discount_type' => 'in:percentage,fixed',
-            'discount_value' => 'numeric|min:0',
+            'code'            => 'string|unique:vouchers,code,' . $id,
+            'description'     => 'nullable|string',
+            'discount_type'   => 'in:percentage,fixed',
+            'discount_value'  => 'numeric|min:0|max:100',
             'min_order_value' => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
-            'usage_limit' => 'integer|min:1',
-            'status' => 'in:active,expired,disabled'
+            'max_discount'    => 'nullable|numeric|min:0',
+            'usage_limit'     => 'integer|min:1',
+            'status'          => 'in:Hoạt động,Ngưng hoạt động,Hết hạn'
         ]);
 
         $voucher->update($request->all());
-        return response()->json(['message' => 'Voucher updated successfully', 'data' => $voucher]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Cập nhật voucher thành công',
+            'data' => $voucher
+        ]);
     }
 
     /**
-     * Xóa mềm voucher (chỉ Admin)
+     * 📌 Xóa mềm voucher (Admin)
      */
     public function softDelete($id)
     {
         $voucher = Voucher::findOrFail($id);
-        $voucher->delete(); // Xóa mềm (đặt deleted_at)
-        return response()->json(['message' => 'Voucher soft deleted successfully']);
+        $voucher->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Voucher đã được xóa mềm'
+        ]);
     }
 
     /**
-     * Khôi phục voucher đã bị xóa mềm (chỉ Admin)
+     * 📌 Khôi phục voucher bị xóa mềm (Admin)
      */
     public function restore($id)
     {
         $voucher = Voucher::onlyTrashed()->findOrFail($id);
-        $voucher->restore(); // Khôi phục từ xóa mềm
-        return response()->json(['message' => 'Voucher restored successfully']);
+        $voucher->restore();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Khôi phục voucher thành công'
+        ]);
     }
 
     /**
-     * Lấy danh sách voucher đã bị xóa mềm (chỉ Admin)
+     * 📌 Lấy danh sách voucher bị xóa mềm (Admin)
      */
     public function trashed()
     {
-        return response()->json(Voucher::onlyTrashed()->get());
+        $vouchers = Voucher::onlyTrashed()->get();
+        return response()->json([
+            'status' => true,
+            'data' => $vouchers
+        ]);
     }
 
     /**
-     *  Áp dụng voucher khi thanh toán (Tất cả user có thể sử dụng)
+     * 📌 Người dùng áp dụng voucher vào giỏ hàng / đơn hàng
      */
     public function applyVoucher(Request $request)
-{
-    //  Kiểm tra dữ liệu đầu vào
-    $request->validate([
-        'code' => 'required|string', // Mã voucher bắt buộc phải có
-        'cart_total' => 'required|numeric|min:0' // Tổng tiền giỏ hàng phải >= 0
-    ]);
+    {
+        $request->validate([
+            'code'       => 'required|string',
+            'cart_total' => 'required|numeric|min:0'
+        ]);
 
-    //  Tìm voucher hợp lệ
-    $voucher = Voucher::where('code', $request->code)
-        ->where('status', 'active') // Chỉ chấp nhận voucher đang hoạt động
-        ->whereColumn('used_count', '<', 'usage_limit') // Chưa sử dụng hết số lần cho phép
-        ->first();
+        // ✅ Tìm voucher hợp lệ
+        $voucher = Voucher::where('code', $request->code)
+            ->where('status', 'Hoạt động')
+            ->whereColumn('used_count', '<', 'usage_limit')
+            ->first();
 
-    //  Nếu không tìm thấy voucher hợp lệ, trả về lỗi
-    if (!$voucher) {
+        if (!$voucher) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Voucher không hợp lệ hoặc đã hết hạn'
+            ], 400);
+        }
+
+        // ✅ Kiểm tra tổng đơn hàng có đủ điều kiện sử dụng voucher
+        if ($voucher->min_order_value && $request->cart_total < $voucher->min_order_value) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Giá trị đơn hàng chưa đạt mức tối thiểu để áp dụng voucher'
+            ], 400);
+        }
+
+        // ✅ Tính số tiền được giảm
+        $discount = 0;
+        if ($voucher->discount_type === 'percentage') {
+            $discount = $request->cart_total * ($voucher->discount_value / 100);
+            if ($voucher->max_discount) {
+                $discount = min($discount, $voucher->max_discount);
+            }
+        } else {
+            $discount = min($voucher->discount_value, $request->cart_total);
+        }
+
+        // ✅ Không được giảm vượt quá tổng đơn
+        $discount = min($discount, $request->cart_total);
+        $final_total = $request->cart_total - $discount;
+
+        // ✅ Cộng thêm lượt sử dụng
+        $voucher->increment('used_count');
+
+        // ✅ Nếu hết lượt, cập nhật trạng thái voucher
+        if ($voucher->used_count >= $voucher->usage_limit) {
+            $voucher->update(['status' => 'Hết hạn']);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'This voucher is expired or invalid.'
-        ], 400);
+            'status' => true,
+            'message' => 'Áp dụng voucher thành công',
+            'discount' => $discount,
+            'final_total' => $final_total
+        ]);
     }
-
-    // ❌ 4. Kiểm tra nếu tổng tiền giỏ hàng có đạt điều kiện tối thiểu hay không
-    if ($request->cart_total < $voucher->min_order_value) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Order value too low for this voucher.'
-        ], 400);
-    }
-
-    //  Tính số tiền được giảm giá
-    if ($voucher->discount_type === 'percentage') {
-        // Nếu giảm giá theo phần trăm, không vượt quá max_discount (nếu có)
-        $discount = min($request->cart_total * ($voucher->discount_value / 100), $voucher->max_discount);
-    } else {
-        // Nếu giảm giá theo số tiền cố định, không vượt quá tổng tiền giỏ hàng
-        $discount = min($voucher->discount_value, $request->cart_total);
-    }
-
-    // Tăng số lần đã sử dụng của voucher
-    $voucher->increment('used_count');
-
-    //  Nếu đã sử dụng hết số lần cho phép, cập nhật trạng thái thành "expired"
-    if ($voucher->used_count >= $voucher->usage_limit) {
-        $voucher->update(['status' => 'Hết hạn']);
-    }
-
-    //  Trả về kết quả với số tiền giảm và tổng tiền sau khi áp dụng voucher
-    return response()->json([
-        'success' => true,
-        'discount' => $discount, // Số tiền giảm giá
-        'new_total' => $request->cart_total - $discount // Tổng tiền sau khi áp dụng voucher
-    ]);
-}
-
 }

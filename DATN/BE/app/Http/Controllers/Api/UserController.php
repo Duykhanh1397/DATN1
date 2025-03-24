@@ -69,38 +69,32 @@ class UserController extends Controller
 
     // Cập nhật user
     public function update(Request $request, $id)
-{
-    $user = User::find($id);
-    if (!$user) {
-        return response()->json(['message' => 'Không tìm thấy tài khoản'], 404);
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'Không tìm thấy tài khoản'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $id,
+            'password' => 'sometimes|min:6',
+            'role' => 'sometimes|in:Admin,Customer'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user->update([
+            'name' => $request->name ?? $user->name,
+            'email' => $request->email ?? $user->email,
+            'password' => $request->password ? Hash::make($request->password) : $user->password,
+            'role' => $request->role ?? $user->role,
+        ]);
+
+        return response()->json(['message' => 'Cập nhật tài khoản thành công ', 'user' => $user], 200);
     }
-
-    $validator = Validator::make($request->all(), [
-        'name' => 'sometimes|string|max:255',
-        'email' => 'sometimes|email|unique:users,email,' . $id,
-        'password' => 'sometimes|min:6',
-        'role' => 'sometimes|in:Admin,Customer',
-        'status' => 'sometimes|in:Hoạt động,Ngưng hoạt động',
-        'phone' => 'sometimes|string|max:15|regex:/^(0[0-9]{9,14})$/',
-        'address' => 'sometimes|string|max:255',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json($validator->errors(), 422);
-    }
-
-    $user->update([
-        'name' => $request->name ?? $user->name,
-        'email' => $request->email ?? $user->email,
-        'password' => $request->password ? Hash::make($request->password) : $user->password,
-        'role' => $request->role ?? $user->role,
-        'status' => $request->status ?? $user->status,
-        'phone' => $request->phone ?? $user->phone,
-        'address' => $request->address ?? $user->address,
-    ]);
-
-    return response()->json(['message' => 'Cập nhật tài khoản thành công', 'user' => $user], 200);
-}
 
     // Xóa mềm user
     public function destroy($id)
