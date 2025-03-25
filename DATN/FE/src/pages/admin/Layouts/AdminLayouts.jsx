@@ -10,8 +10,9 @@ const AdminLayout = () => {
     <Layout style={{ minHeight: "100vh" }}>
       <Sidebar />
       <Layout>
-        <HeaderAdmin />
-        <Content style={{ margin: "20px", background: "#fff", padding: "20px" }}>
+        <Content
+          style={{ margin: "20px", background: "#fff", padding: "20px" }}
+        >
           <Outlet /> {/* ✅ Load nội dung route con ở đây */}
         </Content>
       </Layout>
@@ -20,4 +21,3 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
-

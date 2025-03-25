@@ -1,83 +1,5 @@
 <?php
 
-// namespace App\Models;
-
-// use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Illuminate\Database\Eloquent\Model;
-
-// class Order extends Model
-// {
-//     use HasFactory;
-
-//     protected $fillable = ['user_id', 'voucher_id', 'order_code', 'status', 'total_amount', 'phone_number', 'address'];
-
-//     public function user()
-//     {
-//         return $this->belongsTo(User::class);
-//     }
-
-//     public function orderItems()
-//     {
-//         return $this->hasMany(OrderItem::class);
-//     }
-
-//     public function payment()
-//     {
-//         return $this->hasOne(Payment::class);
-//     }
-
-//     public function voucher()
-//     {
-//         return $this->belongsTo(Voucher::class);
-//     }
-// }
-
-
-
-
-// namespace App\Models;
-
-// use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Illuminate\Database\Eloquent\Model;
-
-// class Order extends Model
-// {
-//     use HasFactory;
-
-//     protected $fillable = [
-//         'user_id',
-//         'guest_user', // Thêm trường guest_user để lưu thông tin khách hàng tạm thời
-//         'voucher_id',
-//         'order_code',
-//         'status',
-//         'total_amount',
-//         'phone_number',
-//         'address',
-//     ];
-
-//     public function user()
-//     {
-//         return $this->belongsTo(User::class);
-//     }
-
-//     public function orderItems()
-//     {
-//         return $this->hasMany(OrderItem::class);
-//     }
-
-//     public function voucher()
-//     {
-//         return $this->belongsTo(Voucher::class);
-//     }
-//     public function payment()
-//         {
-//             return $this->hasOne(Payment::class);
-//         }
-// }
-
-
-
-// <?php
 
 
 // namespace App\Models;
@@ -221,7 +143,7 @@ class Order extends Model
     {
         return is_array($status) ? $query->whereIn('status', $status) : $query->where('status', $status);
     }
-
+ 
     /**
      * ✅ Tính tổng số lượng sản phẩm của đơn hàng (khi cần gọi gộp)
      */
@@ -237,5 +159,13 @@ class Order extends Model
     public function getCustomerNameAttribute()
     {
         return $this->user ? $this->user->name : $this->guest_user;
+    }
+
+    public function getTotalAmountAttribute()
+    {
+        return $this->orderItems->sum(function ($item) {
+            // Nếu variant có price thì nhân, không thì lấy 0
+            return $item->quantity * ($item->productVariant->price ?? 0);
+        });
     }
 }

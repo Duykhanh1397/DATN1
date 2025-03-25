@@ -361,7 +361,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('profile', 'profile');
     });
 
-    // ✅ Cart
+    // ✅ Cart 
     Route::prefix('cart')->group(function () {
         Route::get('/', [CartItemController::class, 'index']);
         Route::delete('{cartId}', [CartController::class, 'destroy']);
@@ -381,7 +381,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Voucher
     Route::post('vouchers/apply', [VoucherController::class, 'applyVoucher']);
 
-    // ✅ Orders
+    // ✅ Orders 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'userOrders']);
         Route::post('/', [OrderController::class, 'create']);   // ✅ Đặt hàng
@@ -445,6 +445,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('products/{product}/productvariants', ProductVariantController::class);
         Route::prefix('productvariants')->group(function () {
             Route::get('/', [ProductVariantController::class, 'getAllProductVariants']);
+            Route::get('{variant}/product', [ProductVariantController::class, 'getProductByVariant']);
             Route::delete('{productvariant}/soft', [ProductVariantController::class, 'softDelete']);
             Route::post('{productvariant}/restore', [ProductVariantController::class, 'restore']);
             Route::get('{product}/trashed', [ProductVariantController::class, 'trashed']);
@@ -452,7 +453,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('{id}', [ProductVariantController::class, 'show'])->name('productvariants.show');
             Route::put('{variant}', [ProductVariantController::class, 'update']);
         });
-
+ 
 
         // ✅ Variant Color Management
         Route::apiResource('variantcolor', VariantColorController::class);
@@ -494,4 +495,17 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('{orderId}/update-status', [OrderController::class, 'updateStatus']);
         });
     });
+
+
+    // 📌 API dành cho user (không yêu cầu role admin)
+Route::middleware('auth:sanctum')->group(function () {
+    // 📌 Người dùng có thể xem danh sách sản phẩm
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{id}', [ProductController::class, 'show']);
+
+    // 📌 Người dùng có thể xem danh mục
+    Route::get('/categories', [CategoryController::class, 'index']);
+
+});
+
 });

@@ -215,17 +215,29 @@ const Register = () => {
               style={{ marginBottom: 10 }}
             />
           ))}
-
-        <Form.Item style={{ textAlign: "center", marginTop: 20 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            style={{ width: "40%", height: "45px", fontSize: "16px" }}
+        <Form.Item
+          wrapperCol={{
+            span: 24,
+            style: { textAlign: "center", marginTop: 20 },
+          }}
+        >
+          <button
+            type="submit"
+            className="signup-button"
+            style={{
+              width: "40%",
+              height: "50px",
+              fontSize: "16px",
+              backgroundColor: "#d9d9d9",
+              border: "1px solid #d9d9d9",
+              borderRadius: "4px",
+              cursor: "pointer",
+              transition: "background-color 0.3s",
+            }}
           >
             Tạo tài khoản
-          </Button>
+          </button>
         </Form.Item>
-
         <hr style={{ borderTop: "2px dashed #444", marginTop: "20px" }} />
 
         <Form.Item style={{ textAlign: "center", marginTop: 10 }}>

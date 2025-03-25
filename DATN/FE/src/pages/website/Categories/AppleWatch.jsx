@@ -11,7 +11,7 @@ const AppleWatch = () => {
   const { data: products, isLoading } = useQuery({
     queryKey: ["IPHONE_PRODUCTS"],
     queryFn: async () => {
-      const { data } = await API.get("/admin/products");
+      const { data } = await API.get("/products");
 
       // Lọc sản phẩm thuộc danh mục
       return data.data

@@ -174,6 +174,18 @@ import EditUser from "./pages/admin/Users/EditUser.jsx";
 import ViewUser from "./pages/admin/Users/ViewUser.jsx";
 import DeletedUsers from "./pages/admin/Users/DeletedUsers.jsx";
 import CategoryList from "./pages/admin/Categories/CategoryList.jsx";
+import CartPage from "./pages/website/cart/CartPage.jsx";
+import ProductList from "./pages/admin/Products/ProductList.jsx";
+import DeletedProductsList from "./pages/admin/Products/DeletedProductsList .jsx";
+import OrderDetail from "./pages/admin/Orders/OrderDetailPage.jsx";
+import ProductVariantList from "./pages/admin/Products/ProductVariantList.jsx";
+import DetailPage from "./pages/website/Detail/DetailPage.jsx";
+import Iphone from "./pages/website/Categories/Iphone.jsx";
+import Ipad from "./pages/website/Categories/Ipad.jsx";
+import MacBook from "./pages/website/Categories/MacBook.jsx";
+import AppleWatch from "./pages/website/Categories/AppleWatch.jsx";
+import PhuKien from "./pages/website/Categories/PhuKien.jsx";
+import Checkout from "./pages/website/Checkout/Checkout.jsx";
 import OrderList from "./pages/admin/Orders/OrderList.jsx";
 
 // ✅ Tạo một QueryClient mới
@@ -188,10 +200,20 @@ function App() {
             {/* 🌍 Layout Website */}
             <Route path="/" element={<Websitelayout />}>
               <Route index element={<Home />} />{" "}
+              {/* ✅ Fix lỗi đường dẫn `/` */}
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="reset-password" element={<ResetPassword />} />
+              <Route path="cart" element={<CartPage />} />
+              <Route path="order/:orderId" element={<Checkout />} />
+              <Route path="product/:id" element={<DetailPage />} />
+              <Route path="iphone" element={<Iphone />} />
+              <Route path="ipad" element={<Ipad />} />
+              <Route path="macbook" element={<MacBook />} />
+              <Route path="applewatch" element={<AppleWatch />} />
+              <Route path="phukien" element={<PhuKien />} />
+              {/* <Route path="/product" element={<DetailPage />} /> */}
             </Route>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<DashboardPage />} />
@@ -201,7 +223,14 @@ function App() {
               <Route path="users/view/:id" element={<ViewUser />} />
               <Route path="users/deleted" element={<DeletedUsers />} />
               <Route path="categories" element={<CategoryList />} />
+              <Route path="products/list" element={<ProductList />} />
+              <Route
+                path="products/variants"
+                element={<ProductVariantList />}
+              />
+              <Route path="products/delete" element={<DeletedProductsList />} />
               <Route path="orders" element={<OrderList />} />
+              <Route path="orders/:orderId" element={<OrderDetail />} />
             </Route>
 
             {/* 🔒 User Protected Routes */}

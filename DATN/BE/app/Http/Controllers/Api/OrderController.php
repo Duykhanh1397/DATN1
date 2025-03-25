@@ -22,7 +22,7 @@ class OrderController extends Controller
      * - FE gọi: GET /api/orders
      */
     public function index(Request $request)
-    {
+    { 
         $user = Auth::user();
 
         // ✅ Check role: Nếu Admin lấy hết, User chỉ lấy của mình
@@ -53,7 +53,14 @@ class OrderController extends Controller
     public function show($orderId)
     {
         // ✅ Load đầy đủ quan hệ
-        $order = Order::with(['orderItems.productVariant', 'voucher', 'user'])->find($orderId);
+        // $order = Order::with(['orderItems.productVariant', 'voucher', 'user'])->find($orderId);
+$order = Order::with([
+    'user',
+    'orderItems.productVariant.product',
+    'orderItems.productVariant.color',
+    'orderItems.productVariant.storage',
+    'orderItems.productVariant.images'
+])->findOrFail($orderId);
 
 
         if (!$order) {
@@ -143,7 +150,7 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($orderId);
         $user = Auth::user();
-
+        
         // ✅ Cập nhật trạng thái
         $order->update(['status' => $request->status]);
 
