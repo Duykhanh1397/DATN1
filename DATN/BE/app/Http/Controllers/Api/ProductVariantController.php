@@ -28,15 +28,18 @@ class ProductVariantController extends Controller
     }
 
 
- public function getAllProductVariants()
+public function getAllProductVariants()
 {
     $variants = ProductVariant::with(['color', 'storage', 'product.category', 'images'])->get();
 
     // Lặp qua từng variant và image để thêm link đầy đủ
     $variants->map(function ($variant) {
         $variant->images->map(function ($img) {
-            // ĐÃ SỬA Ở ĐÂY
-            $img->image_url = asset('storage/' . $img->image_url);
+            // Kiểm tra nếu image_url đã có domain
+            if (!str_contains($img->image_url, 'http://127.0.0.1:8000/storage/')) {
+                // Chỉ thêm domain nếu chưa có
+                $img->image_url = asset('storage/' . $img->image_url);
+            }
             return $img;
         });
         return $variant;

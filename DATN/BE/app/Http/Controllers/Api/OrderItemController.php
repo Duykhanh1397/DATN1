@@ -26,7 +26,7 @@ class OrderItemController extends Controller
             'data' => $orderItems
         ]);
     }   
-
+ 
     /**
      * 📌 2. Thêm sản phẩm vào đơn hàng
      */
@@ -118,6 +118,16 @@ class OrderItemController extends Controller
         $this->updateOrderTotal($orderId);
 
         return response()->json(['status' => true, 'message' => 'Sản phẩm đã được xóa khỏi đơn hàng']);
+    }
+
+    /**
+     * 📌 Hàm cập nhật tổng tiền đơn hàng
+     */
+    private function updateOrderTotal($orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        $totalAmount = OrderItem::where('order_id', $orderId)->sum('total_price');
+        $order->update(['total_amount' => $totalAmount]);
     }
 
     /**

@@ -40,5 +40,6 @@ public function getImageUrlAttribute($value)
     return asset('storage/' . $this->attributes['image_url']);
 }
 
+    
 
 }

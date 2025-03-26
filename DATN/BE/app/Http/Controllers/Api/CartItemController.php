@@ -15,39 +15,64 @@ class CartItemController extends Controller
      * 📌 Lấy danh sách sản phẩm trong giỏ hàng của người dùng
      */
     public function index()
-    {
-        $cart = Cart::with('items.productVariant.color', 'items.productVariant.storage')
-            ->where('user_id', Auth::id())
-            ->first();
+{
+    $cart = Cart::with([
+            'items.productVariant.color',
+            'items.productVariant.storage',
+            'items.productVariant.product',
+            'items.productVariant.images'
+        ])
+        ->where('user_id', Auth::id())
+        ->first();
 
-        if (!$cart) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Giỏ hàng trống',
-                'data' => []
-            ]);
-        }
-
-        $items = $cart->items->map(function ($item) {
-            return [
-                'cart_item_id' => $item->id,
-                'product_variant' => [
-                    'id' => $item->productVariant->id,
-                    'color' => $item->productVariant->color->value ?? null,
-                    'storage' => $item->productVariant->storage->value ?? null,
-                    'price' => $item->productVariant->price
-                ],
-                'quantity' => $item->quantity,
-                'total_price' => $item->total_price
-            ];
-        });
-
+    if (!$cart) {
         return response()->json([
-            'status' => true,
-            'message' => 'Lấy danh sách sản phẩm trong giỏ',
-            'data' => $items
+            'status' => false,
+            'message' => 'Giỏ hàng trống',
+            'data' => []
         ]);
     }
+
+    $items = $cart->items->map(function ($item) {
+        $variant = $item->productVariant;
+
+        // Xử lý toàn bộ images trong variant (theo logic bạn nói)
+        $variant->images->map(function ($img) {
+            // Kiểm tra nếu image_url đã có domain chưa
+            if (!filter_var($img->image_url, FILTER_VALIDATE_URL)) {
+                $img->image_url = asset('storage/' . ltrim($img->image_url, '/'));
+            }
+            return $img;
+        });
+
+        // Lấy ảnh đầu tiên trong danh sách images (sau khi đã map xong ở trên)
+        $variantImage = $variant->images->first()->image_url
+            ?? ($variant->product->image ? asset('storage/' . ltrim($variant->product->image, '/')) : null);
+
+        return [
+            'cart_item_id' => $item->id,
+            'product_variant' => [
+                'id' => $variant->id,
+                'color' => $variant->color->value ?? null,
+                'storage' => $variant->storage->value ?? null,
+                'price' => $variant->price,
+                'stock' => $variant->stock,
+                'name' => $variant->product->name ?? null,
+                'image' => $variantImage, // ảnh đầu tiên sau khi xử lý images
+                'images' => $variant->images // có thể trả cả list ảnh đã xử lý ra đây nếu cần
+            ],
+            'quantity' => $item->quantity,
+            'total_price' => $item->total_price
+        ];
+    });
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Lấy danh sách sản phẩm trong giỏ',
+        'data' => $items
+    ]);
+}
+
 
 
     /**
@@ -167,42 +192,6 @@ class CartItemController extends Controller
             'data' => $cartItem
         ]);
     }
-
-    /**
-     * 📌 Xóa một sản phẩm khỏi giỏ hàng
-     */
-    // public function destroy($cartItemId)
-    // {
-    //     $cartItem = CartItem::findOrFail($cartItemId);
-
-    //     // ✅ Kiểm tra quyền (Chỉ chủ sở hữu hoặc Admin)
-    //     if (Auth::id() !== $cartItem->cart->user_id && Auth::user()->role !== 'Admin') {
-    //         return response()->json(['message' => 'Bạn không có quyền xóa sản phẩm này khỏi giỏ hàng'], 403);
-    //     }
-
-    //     // ✅ Kiểm tra số lượng sản phẩm
-    //     if ($cartItem->quantity > 1) {
-    //         // ✅ Giảm số lượng sản phẩm đi 1
-    //         $cartItem->update([
-    //             'quantity'    => $cartItem->quantity - 1,
-    //             'total_price' => ($cartItem->quantity - 1) * $cartItem->productVariant->price
-    //         ]);
-    //     } else {
-    //         // ✅ Nếu số lượng là 1, xóa sản phẩm khỏi giỏ hàng
-    //         $cartItem->delete();
-    //     }
-
-    //     // ✅ Cập nhật tổng tiền giỏ hàng
-    //     $this->calculateTotalAmount($cartItem->cart_id);
-
-    //     return response()->json([
-    //         'status'  => true,
-    //         'message' => 'Đã xóa một sản phẩm khỏi giỏ hàng'
-    //     ]);
-    // }
-
-
-
 
     /**
      * 📌 Tăng số lượng sản phẩm trong giỏ hàng

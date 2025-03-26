@@ -33,14 +33,20 @@ body {
   border-color: #ffc107 !important;
 }
 
-.category-box {
+/* .category-box {
   height: 200px;
   background-color: #333;
   border: 1px solid #444;
   transition: transform 0.3s ease;
-}
+} */
 
-.category-box:hover {
+/* .category-box:hover {
+  transform: scale(1.05);
+} */
+.product-box:hover {
+  transition: transform 0.3s ease;
+}
+.product-box:hover {
   transform: scale(1.05);
 }
 
@@ -56,3 +62,7 @@ body {
   background-color: #444 !important;
   color: #fff;
 }
+/* .btn:hover {
+  background-color: #444 !important;
+  color: #fff !important;
+} */
