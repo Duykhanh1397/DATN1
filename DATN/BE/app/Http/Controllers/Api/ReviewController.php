@@ -192,24 +192,7 @@ class ReviewController extends Controller
 
 
 
-    /**
-     * 📌 Hiển thị chi tiết một đánh giá
-     */
-    public function show($id)
-    {
-        $review = Review::with(['product', 'user:id,name', 'order:id,order_code'])->findOrFail($id);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Chi tiết đánh giá',
-            'data' => $review
-        ]);
-    }
-
-
-
-
-
+  
     
 
    /**
@@ -274,51 +257,122 @@ class ReviewController extends Controller
     }
 
 
+ /**
+     * Lấy chi tiết một đánh giá
+     */
+    public function show($id)
+    {
+        try {
+            Log::info('Lấy chi tiết đánh giá', ['review_id' => $id]);
 
-    
+            $review = Review::with(['product:id,name', 'productVariant', 'user:id,name', 'order:id,order_code'])
+                            ->findOrFail($id);
+
+            Log::info('Đã lấy chi tiết đánh giá', ['review_id' => $id]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Chi tiết đánh giá',
+                'data' => $review
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi lấy chi tiết đánh giá: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+                'review_id' => $id,
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi lấy chi tiết đánh giá. Vui lòng thử lại!'
+            ], 500);
+        }
+    }
 
     /**
-     * 📌 Cập nhật đánh giá (Chỉ chủ sở hữu có thể sửa)
+     * Cập nhật đánh giá (Chỉ chủ sở hữu có thể sửa)
      */
     public function update(Request $request, $id)
     {
-        $review = Review::findOrFail($id);
+        try {
+            Log::info('Cập nhật đánh giá', ['review_id' => $id, 'user_id' => Auth::id()]);
 
-        // ✅ Kiểm tra xem người dùng có quyền chỉnh sửa không
-        if ($review->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Bạn không có quyền chỉnh sửa đánh giá này'], 403);
+            $review = Review::findOrFail($id);
+
+            if ($review->user_id !== Auth::id()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Bạn không có quyền chỉnh sửa đánh giá này'
+                ], 403);
+            }
+
+            $request->validate([
+                'rating' => 'sometimes|integer|min:1|max:5',
+                'comment' => 'nullable|string|max:1000'
+            ]);
+
+            $review->update($request->only(['rating', 'comment']));
+
+            Log::info('Đã cập nhật đánh giá', ['review_id' => $id]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Đánh giá đã được cập nhật',
+                'data' => $review
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi cập nhật đánh giá: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+                'review_id' => $id,
+                'user_id' => Auth::id(),
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi cập nhật đánh giá. Vui lòng thử lại!'
+            ], 500);
         }
-
-        $request->validate([
-            'rating' => 'sometimes|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000'
-        ]);
-
-        $review->update($request->only(['rating', 'comment']));
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Đánh giá đã được cập nhật',
-            'data' => $review
-        ]);
     }
 
     /**
-     * 📌 Ẩn/Hiển thị đánh giá (Chỉ Admin)
+     * Ẩn/Hiển thị đánh giá (Chỉ Admin)
      */
     public function toggleStatus($id)
     {
-        $review = Review::findOrFail($id);
+        try {
+            Log::info('Thay đổi trạng thái đánh giá', ['review_id' => $id]);
 
-        $review->update(['status' => $review->status === 'Hiển thị' ? 'Ẩn' : 'Hiển thị']);
+            $review = Review::findOrFail($id);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Trạng thái đánh giá đã được cập nhật',
-            'data' => $review
-        ]);
+            $newStatus = $review->status === 'Hiển thị' ? 'Ẩn' : 'Hiển thị';
+            $review->update(['status' => $newStatus]);
+
+            Log::info('Đã thay đổi trạng thái đánh giá', [
+                'review_id' => $id,
+                'new_status' => $newStatus,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Trạng thái đánh giá đã được cập nhật',
+                'data' => $review
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi thay đổi trạng thái đánh giá: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+                'review_id' => $id,
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi thay đổi trạng thái đánh giá. Vui lòng thử lại!'
+            ], 500);
+        }
     }
 
+
+
+
+
+
+
+    
     /**
      * 📌 Xóa mềm đánh giá (Chỉ chủ sở hữu hoặc Admin)
      */
