@@ -323,18 +323,26 @@ class VoucherController extends Controller
         }
     }
 
-    /**
+   /**
      * 📌 Xóa mềm voucher (Admin)
      */
     public function softDelete($id)
     {
-        $voucher = Voucher::findOrFail($id);
-        $voucher->delete();
+        try {
+            $voucher = Voucher::findOrFail($id);
+            $voucher->delete();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Voucher đã được xóa mềm'
-        ]);
+            return response()->json([
+                'status' => true,
+                'message' => 'Voucher đã được xóa mềm'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không tìm thấy voucher để xóa mềm',
+                'error' => $e->getMessage(),
+            ], 404);
+        }
     }
 
     /**
@@ -342,13 +350,21 @@ class VoucherController extends Controller
      */
     public function restore($id)
     {
-        $voucher = Voucher::onlyTrashed()->findOrFail($id);
-        $voucher->restore();
+        try {
+            $voucher = Voucher::onlyTrashed()->findOrFail($id);
+            $voucher->restore();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Khôi phục voucher thành công'
-        ]);
+            return response()->json([
+                'status' => true,
+                'message' => 'Khôi phục voucher thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không tìm thấy voucher để khôi phục',
+                'error' => $e->getMessage(),
+            ], 404);
+        }
     }
 
     /**
@@ -359,8 +375,31 @@ class VoucherController extends Controller
         $vouchers = Voucher::onlyTrashed()->get();
         return response()->json([
             'status' => true,
+            'message' => 'Danh sách voucher đã xóa mềm',
             'data' => $vouchers
         ]);
+    }
+
+    /**
+     * 📌 Xóa vĩnh viễn voucher (Admin)
+     */
+    public function forceDelete($id)
+    {
+        try {
+            $voucher = Voucher::onlyTrashed()->findOrFail($id);
+            $voucher->forceDelete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Voucher đã bị xóa vĩnh viễn'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không tìm thấy voucher để xóa vĩnh viễn',
+                'error' => $e->getMessage(),
+            ], 404);
+        }
     }
 
     /**
