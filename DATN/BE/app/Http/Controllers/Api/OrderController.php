@@ -416,4 +416,38 @@ class OrderController extends Controller
 
         return response()->json(['message' => 'Order updated successfully']);
     }
+
+    public function delete($orderId)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $orderId)->where('user_id', $user->id)->first();
+
+        // ✅ Kiểm tra đơn hàng có tồn tại không
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Đơn hàng không tồn tại hoặc không thuộc về bạn'], 404);
+        }
+
+        // ✅ Chỉ xóa nếu đơn hàng ở trạng thái "Chờ xác nhận"
+        if ($order->status !== 'Chờ xác nhận') {
+            return response()->json(['status' => false, 'message' => 'Bạn chỉ có thể xóa đơn hàng khi nó chưa được xử lý'], 400);
+        }
+
+        // ✅ Hoàn lại tồn kho cho từng sản phẩm
+        foreach ($order->orderItems as $item) {
+            $variant = ProductVariant::find($item->product_variant_id);
+            if ($variant) {
+                $variant->increment('stock', $item->quantity);
+            }
+        }
+
+        // ✅ Xóa các mục liên quan trước khi xóa đơn
+        OrderItem::where('order_id', $order->id)->delete();
+        OrderStatusHistory::where('order_id', $order->id)->delete();
+        $order->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Đơn hàng đã được xóa thành công'
+        ]);
+    }
 }

@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class OrderItemController extends Controller
 {
-     /**
+    /**
      * 📌 [USER/ADMIN] Lấy danh sách sản phẩm trong đơn hàng
      * - FE gọi: GET /api/orders/{orderId}/items
      */
@@ -25,8 +25,8 @@ class OrderItemController extends Controller
             'message' => 'Danh sách sản phẩm trong đơn hàng',
             'data' => $orderItems
         ]);
-    }   
- 
+    }
+
     /**
      * 📌 2. Thêm sản phẩm vào đơn hàng
      */
@@ -82,6 +82,8 @@ class OrderItemController extends Controller
     /**
      * 📌 3. Cập nhật số lượng sản phẩm trong đơn hàng
      */
+
+
     public function update(Request $request, $orderItemId)
     {
         $request->validate(['quantity' => 'required|integer|min:1']);
@@ -104,7 +106,6 @@ class OrderItemController extends Controller
 
         return response()->json(['status' => true, 'message' => 'Cập nhật số lượng thành công']);
     }
-
     /**
      * 📌 4. Xóa sản phẩm khỏi đơn hàng
      */
@@ -118,16 +119,6 @@ class OrderItemController extends Controller
         $this->updateOrderTotal($orderId);
 
         return response()->json(['status' => true, 'message' => 'Sản phẩm đã được xóa khỏi đơn hàng']);
-    }
-
-    /**
-     * 📌 Hàm cập nhật tổng tiền đơn hàng
-     */
-    private function updateOrderTotal($orderId)
-    {
-        $order = Order::findOrFail($orderId);
-        $totalAmount = OrderItem::where('order_id', $orderId)->sum('total_price');
-        $order->update(['total_amount' => $totalAmount]);
     }
 
     /**
