@@ -408,4 +408,12 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    public function update(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        $order->update($request->all());
+
+        return response()->json(['message' => 'Order updated successfully']);
+    }
 }
