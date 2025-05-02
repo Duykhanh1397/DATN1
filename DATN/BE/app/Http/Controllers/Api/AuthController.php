@@ -61,7 +61,6 @@ class AuthController extends Controller
 
 
 
-
     public function RegisterUser(Request $request)
     {
         try {
@@ -219,7 +218,9 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role
+                    'role' => $user->role,
+                    'phone' => $user->phone, 
+                    'address' => $user->address, 
                 ]
             ], 200);
     
