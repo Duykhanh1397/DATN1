@@ -32,6 +32,11 @@ class CategoryController extends Controller
         }
     }
 
+
+
+
+
+
     public function trashed()
     {
         try {
@@ -58,16 +63,20 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validate dữ liệu đầu vào
-            $request->validate([
+            // Validate dữ liệu đầu vào với thông báo tùy chỉnh
+            $validator = $request->validate([
                 'name' => 'required|string|max:255|unique:categories,name',
                 'description' => 'nullable|string',
-               
+            ], [
+                'name.required' => 'Tên danh mục là bắt buộc.',
+                'name.unique' => 'Tên danh mục đã tồn tại, vui lòng chọn tên khác.',
+                'name.string' => 'Tên danh mục phải là chuỗi ký tự.',
+                'name.max' => 'Tên danh mục không được dài quá :max ký tự.',
             ]);
 
             // Set giá trị mặc định cho status nếu không có
             $data = $request->all();
-            $data['status'] = $data['status'] ?? 'Hoạt động'; // Gán giá trị mặc định nếu không có
+            $data['status'] = $data['status'] ?? 'Hoạt động';
 
             // Thêm danh mục mới vào cơ sở dữ liệu
             $category = Category::create($data);
@@ -77,8 +86,31 @@ class CategoryController extends Controller
                 'message' => 'Thêm danh mục thành công',
                 'data' => $category
             ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Tên danh mục đã tồn tại, vui lòng chọn tên khác.',
+                    'error' => $e->getMessage(),
+                ], 400);
+            }
+            return response()->json([
+                'status' => false,
+                'message' => 'Lỗi khi thêm danh mục vào cơ sở dữ liệu',
+                'error' => $e->getMessage(),
+            ], 500);
         } catch (\Exception $e) {
-            return $this->serverError($e, 'Lỗi khi thêm danh mục');
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi thêm danh mục',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
