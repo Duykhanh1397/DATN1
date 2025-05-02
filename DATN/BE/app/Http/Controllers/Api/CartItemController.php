@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,8 +23,8 @@ class CartItemController extends Controller
             'items.productVariant.product',
             'items.productVariant.images'
         ])
-        ->where('user_id', Auth::id())
-        ->first();
+            ->where('user_id', Auth::id())
+            ->first();
 
         if (!$cart) {
             return response()->json([
@@ -224,23 +225,23 @@ class CartItemController extends Controller
     {
         $cartItem = CartItem::findOrFail($cartItemId);
 
-        // ✅ Check quyền
+        // Check quyền
         if (Auth::id() !== $cartItem->cart->user_id && Auth::user()->role !== 'Admin') {
             return response()->json(['message' => 'Bạn không có quyền tăng sản phẩm này'], 403);
         }
 
-        // ✅ Check tồn kho variant
+        // Check tồn kho variant
         $variant = ProductVariant::findOrFail($cartItem->product_variant_id);
         if ($variant->stock < $cartItem->quantity + 1) {
             return response()->json(['status' => false, 'message' => 'Không đủ tồn kho để tăng số lượng'], 400);
         }
 
-        // ✅ Tăng số lượng và cập nhật giá
+        // Tăng số lượng và cập nhật giá
         $cartItem->quantity += 1;
         $cartItem->total_price = $cartItem->quantity * $variant->price;
         $cartItem->save();
 
-        // ✅ Cập nhật tổng tiền giỏ hàng
+        // Cập nhật tổng tiền giỏ hàng
         $this->calculateTotalAmount($cartItem->cart_id);
 
         return response()->json(['status' => true, 'message' => 'Tăng số lượng thành công']);
@@ -253,7 +254,7 @@ class CartItemController extends Controller
     {
         $cartItem = CartItem::findOrFail($cartItemId);
 
-        // ✅ Check quyền
+        // Check quyền
         if (Auth::id() !== $cartItem->cart->user_id && Auth::user()->role !== 'Admin') {
             return response()->json(['message' => 'Bạn không có quyền giảm sản phẩm này'], 403);
         }
@@ -263,7 +264,7 @@ class CartItemController extends Controller
             $cartItem->total_price = $cartItem->quantity * $cartItem->productVariant->price;
             $cartItem->save();
         } else {
-            // ✅ Nếu còn 1, giảm thì xóa luôn
+            // Nếu còn 1, giảm thì xóa luôn
             $cartItem->delete();
         }
 
@@ -279,28 +280,78 @@ class CartItemController extends Controller
     {
         $cartItem = CartItem::findOrFail($cartItemId);
 
-        // ✅ Check quyền
+        // Check quyền
         if (Auth::id() !== $cartItem->cart->user_id && Auth::user()->role !== 'Admin') {
             return response()->json(['message' => 'Bạn không có quyền xóa sản phẩm này'], 403);
         }
 
         $cartItem->delete();
 
-        // ✅ Cập nhật tổng tiền giỏ hàng
+        // Cập nhật tổng tiền giỏ hàng
         $this->calculateTotalAmount($cartItem->cart_id);
 
         return response()->json(['status' => true, 'message' => 'Đã xóa sản phẩm khỏi giỏ hàng']);
     }
 
+    /**
+     * 📌 Xóa sản phẩm theo đơn hàng
+     */
+    public function removeItemsByOrder($orderId)
+    {
+        $order = Order::with('orderItems')->find($orderId);
+
+        if (!$order) {
+            return response()->json(['message' => 'Không tìm thấy đơn hàng'], 404);
+        }
+
+        if ($order->orderItems->isEmpty()) {
+            return response()->json(['message' => 'Đơn hàng không có sản phẩm nào'], 400);
+        }
+
+        $productVariantIds = $order->orderItems->pluck('product_variant_id')->toArray();
+
+        if (empty($productVariantIds)) {
+            return response()->json(['message' => 'Không có sản phẩm nào để xóa'], 400);
+        }
+
+        $deleted = CartItem::whereIn('product_variant_id', $productVariantIds)->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Đã xóa {$deleted} sản phẩm trong giỏ hàng sau khi đặt hàng"
+        ]);
+    }
 
     /**
-     * 📌 Cập nhật tổng tiền của giỏ hàng (Tự động tính dựa trên `cart_items`)
+     * 📌 Xóa các sản phẩm được chọn
+     */
+    public function removeSelectedItems(Request $request)
+    {
+        try {
+            $userId = $request->input('user_id');
+            $productVariantIds = $request->input('product_variant_ids');
+
+            if (empty($productVariantIds)) {
+                return response()->json(['message' => 'Danh sách sản phẩm trống'], 400);
+            }
+
+            CartItem::where('user_id', $userId)
+                ->whereIn('product_variant_id', $productVariantIds)
+                ->delete();
+
+            return response()->json(['message' => 'Xóa sản phẩm đã chọn thành công']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Lỗi khi xóa sản phẩm đã chọn'], 500);
+        }
+    }
+
+    /**
+     * 📌 Cập nhật tổng tiền của giỏ hàng
      */
     private function calculateTotalAmount($cartId)
     {
         $cart = Cart::with('items.productVariant')->findOrFail($cartId);
 
-        // ✅ Tính tổng tiền dựa trên các `cart_items`
         $totalAmount = $cart->items->sum(function ($item) {
             return $item->quantity * $item->productVariant->price;
         });
