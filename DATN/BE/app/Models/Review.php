@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,88 +11,85 @@ class Review extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'reviews';
+
     protected $fillable = [
         'product_id',
-        'order_id', // Thêm order_id để biết đánh giá thuộc đơn hàng nào
+        'product_variant_id', // Thêm product_variant_id vào fillable
         'user_id',
+        'order_id',
         'rating',
         'comment',
-        'status'
+        'status',
     ];
 
     protected $casts = [
-        'deleted_at' => 'datetime', // Hỗ trợ xóa mềm
+        'rating' => 'integer',
+        'created_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
-    /**
-     * ✅ Quan hệ với sản phẩm
-     */
+    // ✅ Quan hệ với bảng `Product`
     public function product()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Product::class);
     }
 
-    /**
-     * ✅ Quan hệ với đơn hàng (để biết đánh giá thuộc đơn hàng nào)
-     */
+    // ✅ Quan hệ với bảng `ProductVariant`
+    public function productVariant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    // ✅ Quan hệ với bảng `Order`
     public function order()
     {
-        return $this->belongsTo(Order::class, 'order_id');
+        return $this->belongsTo(Order::class);
     }
 
-    /**
-     * ✅ Quan hệ với người dùng (khách hàng đánh giá)
-     */
+    // ✅ Quan hệ với bảng `User`
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
+    }
+     public function color()
+    {
+        return $this->belongsTo(VariantColor::class, 'color_id');
     }
 
-    /**
-     * ✅ Scope: Chỉ lấy đánh giá đang hiển thị
-     */
+    // ✅ Quan hệ với bảng `VariantStorage`
+    public function storage()
+    {
+        return $this->belongsTo(VariantStorage::class, 'storage_id');
+    }
+
+    // ✅ Scope: Lọc các đánh giá hiển thị
     public function scopeVisible($query)
     {
         return $query->where('status', 'Hiển thị');
     }
 
-    /**
-     * ✅ Scope: Lọc đánh giá theo sản phẩm
-     */
+    // ✅ Scope: Lọc đánh giá theo sản phẩm
     public function scopeByProduct($query, $productId)
     {
         return $query->where('product_id', $productId);
     }
 
-    /**
-     * ✅ Scope: Lọc đánh giá theo khách hàng
-     */
+    // ✅ Scope: Lọc đánh giá theo biến thể sản phẩm
+    public function scopeByProductVariant($query, $productVariantId)
+    {
+        return $query->where('product_variant_id', $productVariantId);
+    }
+
+    // ✅ Scope: Lọc đánh giá theo người dùng
     public function scopeByUser($query, $userId)
     {
         return $query->where('user_id', $userId);
     }
 
-    /**
-     * ✅ Scope: Lọc đánh giá theo số sao
-     */
-    public function scopeByRating($query, $rating)
+    // ✅ Scope: Lọc đánh giá theo đơn hàng
+    public function scopeByOrder($query, $orderId)
     {
-        return $query->where('rating', $rating);
-    }
-
-    /**
-     * ✅ Event: Khi xóa mềm đánh giá, tự động cập nhật trạng thái về 'Ẩn'
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::deleting(function ($review) {
-            if ($review->isForceDeleting()) {
-                // Nếu là xóa vĩnh viễn thì không làm gì cả
-                return;
-            }
-            $review->update(['status' => 'Ẩn']);
-        });
+        return $query->where('order_id', $orderId);
     }
 }

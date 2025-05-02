@@ -13,12 +13,13 @@ use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
-
+use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements CanResetPasswordContract
 {
     use HasApiTokens, HasFactory, Notifiable;
     use SoftDeletes; // Kích hoạt xóa mềm
     use CanResetPassword;
+    use HasRoles;
     /**
      * The attributes that are mass assignable.
      *
@@ -34,6 +35,19 @@ class User extends Authenticatable implements CanResetPasswordContract
         'status'
     ];
 
+
+
+    public function hasRole($role)
+    {
+        // If $role is an array, check if the user's role is in the array
+        if (is_array($role)) {
+            return in_array($this->role, $role);
+        }
+    
+        // If $role is a string, directly compare
+        return $this->role === $role;
+    }
+    
     /**
      * The attributes that should be hidden for serialization.
      *

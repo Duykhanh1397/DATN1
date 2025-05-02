@@ -86,32 +86,35 @@ class Voucher extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // ✅ Cho phép ghi dữ liệu vào các cột này
     protected $fillable = [
-        'code',             // Mã voucher
-        'discount_type',    // percentage | fixed
-        'discount_value',   // Giá trị giảm (theo % hoặc số tiền)
-        'min_order_value',  // Giá trị đơn tối thiểu
-        'max_discount',     // Mức giảm tối đa
-        'usage_limit',      // Giới hạn số lần sử dụng
-        'used_count',       // Đếm số lần đã sử dụng
-        'start_date',       // Ngày bắt đầu
-        'end_date',         // Ngày kết thúc
-        'status'            // Trạng thái: Hoạt động | Ngưng hoạt động | Hết hạn
+        'code',
+        'discount_type',
+        'discount_value',
+        'min_order_value',
+        'max_discount',
+        'usage_limit',
+        'used_count',
+        'start_date',
+        'end_date',
+        'status'
     ];
 
-    // ✅ Ép kiểu dữ liệu đúng chuẩn
     protected $casts = [
-        'discount_value'   => 'float',
-        'min_order_value'  => 'float',
-        'max_discount'     => 'float',
-        'start_date'       => 'datetime',
-        'end_date'         => 'datetime',
+        'discount_value' => 'float',
+        'min_order_value' => 'float',
+        'max_discount' => 'float',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
-    /**
-     * ✅ Check Voucher còn hợp lệ (FE nên check thêm isValid = true/false để hiển thị)
-     */
+    // Quan hệ với bảng voucher_user
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'voucher_user')
+                    ->withPivot('used_at')
+                    ->withTimestamps();
+    }
+
     public function isValid()
     {
         $now = Carbon::now();
@@ -122,18 +125,12 @@ class Voucher extends Model
             && (!$this->end_date || $this->end_date->isAfter($now));
     }
 
-    /**
-     * ✅ Kiểm tra xem đơn hàng có đủ điều kiện áp dụng Voucher không
-     */
     public function canApply($orderTotal)
     {
         return $this->isValid() && 
             (!$this->min_order_value || $orderTotal >= $this->min_order_value);
     }
 
-    /**
-     * ✅ Tính toán số tiền giảm giá tối đa được áp dụng
-     */
     public function calculateDiscount($orderTotal)
     {
         if (!$this->canApply($orderTotal)) {
@@ -141,21 +138,16 @@ class Voucher extends Model
         }
 
         if ($this->discount_type === 'percentage') {
-            // 🔥 Giảm theo % (giới hạn bởi max_discount nếu có)
             $discount = ($orderTotal * $this->discount_value) / 100;
             if ($this->max_discount) {
                 $discount = min($discount, $this->max_discount);
             }
-            return min($discount, $orderTotal); // Không giảm quá tổng đơn
+            return min($discount, $orderTotal);
         }
 
-        // 🔥 Giảm theo số tiền cố định
         return min($this->discount_value, $orderTotal);
     }
 
-    /**
-     * ✅ Khi đơn hàng thành công -> Tăng số lượt sử dụng và cập nhật trạng thái nếu hết lượt
-     */
     public function incrementUsage()
     {
         $this->increment('used_count');
@@ -164,13 +156,8 @@ class Voucher extends Model
         }
     }
 
-    /**
-     * ✅ Scope: Chỉ lấy các voucher đang hoạt động
-     */
     public function scopeActive($query)
     {
         return $query->where('status', 'Hoạt động');
     }
 }
-
-
