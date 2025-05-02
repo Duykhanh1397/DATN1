@@ -22,19 +22,19 @@ class OrderController extends Controller
      * - FE gọi: GET /api/orders
      */
     public function index(Request $request)
-    { 
+    {
         $user = Auth::user();
 
         // ✅ Check role: Nếu Admin lấy hết, User chỉ lấy của mình
         if ($user->role === 'Admin') {
             $orders = Order::with(['user', 'orderItems.productVariant'])
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(10); // ✅ Phân trang chuẩn
+                ->orderBy('created_at', 'desc')
+                ->paginate(10); // ✅ Phân trang chuẩn
         } else {
             $orders = Order::with(['orderItems.productVariant'])
-                        ->where('user_id', $user->id)
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(10);
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
         }
 
         return response()->json([
@@ -54,13 +54,13 @@ class OrderController extends Controller
     {
         // ✅ Load đầy đủ quan hệ
         // $order = Order::with(['orderItems.productVariant', 'voucher', 'user'])->find($orderId);
-$order = Order::with([
-    'user',
-    'orderItems.productVariant.product',
-    'orderItems.productVariant.color',
-    'orderItems.productVariant.storage',
-    'orderItems.productVariant.images'
-])->findOrFail($orderId);
+        $order = Order::with([
+            'user',
+            'orderItems.productVariant.product',
+            'orderItems.productVariant.color',
+            'orderItems.productVariant.storage',
+            'orderItems.productVariant.images'
+        ])->findOrFail($orderId);
 
 
         if (!$order) {
@@ -86,10 +86,10 @@ $order = Order::with([
     public function userOrders(Request $request)
     {
         $orders = Order::with([
-                'orderItems.productVariant.color',
-                'orderItems.productVariant.storage',
-                'voucher'
-            ])
+            'orderItems.productVariant.color',
+            'orderItems.productVariant.storage',
+            'voucher'
+        ])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->paginate(10); // ✅ Phân trang để tránh load nhiều quá
@@ -150,7 +150,7 @@ $order = Order::with([
 
         $order = Order::findOrFail($orderId);
         $user = Auth::user();
-        
+
         // ✅ Cập nhật trạng thái
         $order->update(['status' => $request->status]);
 
@@ -181,97 +181,231 @@ $order = Order::with([
      *     "voucher_code": optional
      *   }
      */
-   public function create(Request $request)
-{
-    $user = Auth::user(); // ✅ Kiểm tra user đã đăng nhập chưa
+    public function create(Request $request)
+    {
+        try {
+            $user = Auth::user();
 
-    // ✅ Xử lý rule validate: nếu user login -> không cần phone & address, guest bắt buộc
-    $rules = [
-        'order_items' => 'required|array',
-        'order_items.*.product_variant_id' => 'required|exists:product_variants,id',
-        'order_items.*.quantity' => 'required|integer|min:1',
-        'voucher_code' => 'nullable|string'
-    ];
+            $rules = [
+                'order_items' => 'required|array',
+                'order_items.*.product_variant_id' => 'required|exists:product_variants,id',
+                'order_items.*.quantity' => 'required|integer|min:1',
+                'voucher_code' => 'nullable|string',
+                'payment_method' => 'required|string|in:COD,VNPay',
+                'shipping_fee' => 'nullable|numeric|min:0',
+                'address' => 'required|string'
+            ];
 
-    if (!$user) {
-        // ✅ Guest bắt buộc nhập
-        $rules['phone_number'] = 'required|string';
-        $rules['address'] = 'required|string';
-    }
+            if (!$user) {
+                $rules['phone_number'] = 'required|string';
+            }
 
-    $validated = $request->validate($rules);
+            $validated = $request->validate($rules);
 
-    // ✅ Nếu là user -> tự động lấy phone & address từ database
-    $phone = $user ? $user->phone : $request->phone_number;
-    $address = $user ? $user->address : $request->address;
-    
+            $phone = $user ? $user->phone : $request->phone_number;
+            $address = $request->address;
 
-    if (!$phone || !$address) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Thiếu thông tin số điện thoại hoặc địa chỉ'
-        ], 400);
-    }
+            if (!$phone || !$address) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Thiếu thông tin số điện thoại hoặc địa chỉ'
+                ], 400);
+            }
 
-    // ✅ Xử lý voucher nếu có
-    $voucher = null;
-    if ($request->voucher_code) {
-        $voucher = Voucher::where('code', $request->voucher_code)
-            ->where('status', 'Hoạt động')
-            ->first();
-    }
+            // Lấy thông tin voucher nếu có và kiểm tra tính hợp lệ
+            $voucher = null;
+            $discount = 0;
+            if ($request->voucher_code) {
+                $voucher = Voucher::where('code', $request->voucher_code)
+                    ->where('status', 'Hoạt động')
+                    ->first();
 
-    // ✅ Tính tổng tiền đơn hàng
-    $totalAmount = 0;
-    foreach ($request->order_items as $item) {
-        $variant = ProductVariant::find($item['product_variant_id']);
-        if (!$variant) {
-            return response()->json(['status' => false, 'message' => 'Không tìm thấy sản phẩm'], 404);
+                if (!$voucher) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Voucher không hợp lệ hoặc đã hết hạn'
+                    ], 400);
+                }
+
+                // Kiểm tra xem user đã sử dụng voucher này chưa
+                if ($user) {
+                    $hasUsed = VoucherUser::where('user_id', $user->id)
+                        ->where('voucher_id', $voucher->id)
+                        ->exists();
+                    if ($hasUsed) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Bạn đã sử dụng voucher này rồi. Mỗi tài khoản chỉ được sử dụng voucher một lần.'
+                        ], 400);
+                    }
+                }
+
+                // Kiểm tra các điều kiện khác của voucher
+                $now = Carbon::now();
+                if ($voucher->used_count >= $voucher->usage_limit) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => "Voucher đã hết lượt sử dụng (đã dùng: {$voucher->used_count}/{$voucher->usage_limit})"
+                    ], 400);
+                }
+
+                if ($voucher->start_date && Carbon::parse($voucher->start_date)->gt($now)) {
+                    $startDateLocal = Carbon::parse($voucher->start_date)->setTimezone('Asia/Ho_Chi_Minh');
+                    return response()->json([
+                        'status' => false,
+                        'message' => "Voucher chưa có hiệu lực (bắt đầu từ: {$startDateLocal->format('Y-m-d H:i:s')})"
+                    ], 400);
+                }
+
+                if ($voucher->end_date && Carbon::parse($voucher->end_date)->lt($now)) {
+                    $endDateLocal = Carbon::parse($voucher->end_date)->setTimezone('Asia/Ho_Chi_Minh');
+                    return response()->json([
+                        'status' => false,
+                        'message' => "Voucher đã hết hạn (kết thúc vào: {$endDateLocal->format('Y-m-d H:i:s')})"
+                    ], 400);
+                }
+            }
+
+            // Tính tổng giá sản phẩm
+            $subtotal = 0;
+            foreach ($request->order_items as $item) {
+                $variant = ProductVariant::find($item['product_variant_id']);
+                if (!$variant) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Không tìm thấy sản phẩm với ID: ' . $item['product_variant_id']
+                    ], 400);
+                }
+
+                $subtotal += $variant->price * $item['quantity'];
+            }
+
+            // Kiểm tra giá trị đơn hàng tối thiểu nếu có voucher
+            if ($voucher && $voucher->min_order_value && $subtotal < $voucher->min_order_value) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Giá trị đơn hàng chưa đạt mức tối thiểu để áp dụng voucher (tối thiểu: " . number_format($voucher->min_order_value, 0, ',', '.') . " VNĐ)"
+                ], 400);
+            }
+
+            // Tính giảm giá từ voucher
+            if ($voucher) {
+                if ($voucher->discount_type === 'percentage') {
+                    $discount = $subtotal * ($voucher->discount_value / 100);
+                    if ($voucher->max_discount !== null) {
+                        $discount = min($discount, (float) $voucher->max_discount);
+                    }
+                    Log::info('Discount calculated for percentage voucher', [
+                        'voucher_id' => $voucher->id,
+                        'subtotal' => $subtotal,
+                        'discount_value' => $voucher->discount_value,
+                        'max_discount' => $voucher->max_discount,
+                        'discount' => $discount,
+                    ]);
+                } else {
+                    $discount = $voucher->discount_value;
+                    Log::info('Discount calculated for fixed voucher', [
+                        'voucher_id' => $voucher->id,
+                        'subtotal' => $subtotal,
+                        'discount_value' => $voucher->discount_value,
+                        'discount' => $discount,
+                    ]);
+                }
+            }
+
+            $shippingFee = $request->shipping_fee ?? 0;
+            $finalTotal = max($subtotal - $discount + $shippingFee, 0);
+
+            Log::info('Order totals calculated', [
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'shipping_fee' => $shippingFee,
+                'final_total' => $finalTotal,
+            ]);
+
+            // Tạo đơn hàng với địa chỉ vừa nhập
+            $order = Order::create([
+                'user_id' => $user ? $user->id : null,
+                'guest_user' => $user ? null : $phone,
+                'status' => 'Chờ xác nhận',
+                'total_amount' => $finalTotal,
+                'phone_number' => $phone,
+                'address' => $address,
+                'order_code' => strtoupper(Str::random(10)),
+                'voucher_id' => $voucher?->id,
+                'payment_method' => $request->payment_method,
+                'payment_status' => $request->payment_method === 'COD' ? 'Chờ thanh toán' : 'Thanh toán thành công',
+                'shipping_fee' => $shippingFee,
+                'discount_amount' => $discount,
+            ]);
+
+            // Ghi nhận việc sử dụng voucher nếu có
+            if ($voucher && $user) {
+                VoucherUser::create([
+                    'user_id' => $user->id,
+                    'voucher_id' => $voucher->id,
+                    'used_at' => Carbon::now(),
+                ]);
+
+                $voucher->increment('used_count');
+                if ($voucher->used_count >= $voucher->usage_limit) {
+                    $voucher->update(['status' => 'Hết hạn']);
+                }
+            }
+
+            // Tạo bản ghi thanh toán
+            $paymentStatus = $request->payment_method === 'VNPay'
+                ? 'Thanh toán thành công'
+                : 'Chờ thanh toán';
+
+            Payment::create([
+                'order_id' => $order->id,
+                'payment_method' => $request->payment_method,
+                'payment_status' => $paymentStatus,
+                'amount' => $finalTotal,
+                'payment_date' => now(),
+            ]);
+
+            // Nếu là VNPay thì cập nhật trạng thái trong đơn hàng (nếu muốn lưu)
+            if ($request->payment_method === 'VNPay') {
+                $order->update(['payment_status' => 'Thanh toán thành công']);
+            }
+
+            foreach ($request->order_items as $item) {
+                $variant = ProductVariant::find($item['product_variant_id']);
+                if (!$variant) continue;
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_variant_id' => $item['product_variant_id'],
+                    'quantity' => $item['quantity'],
+                    'total_price' => $variant->price * $item['quantity'],
+                ]);
+
+                $variant->decrement('stock', $item['quantity']);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Đơn hàng đã được tạo thành công',
+                'order_id' => $order->id,
+                'payment_method' => $order->payment_method,
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Lỗi tạo đơn hàng: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Lỗi server: ' . $e->getMessage(),
+            ], 500);
         }
-        $totalAmount += $variant->price * $item['quantity'];
     }
-
-    // ✅ Áp dụng giảm giá từ voucher (nếu có)
-    if ($voucher) {
-        if ($voucher->discount_type === 'percentage') {
-            $discount = ($totalAmount * $voucher->discount_value) / 100;
-            $totalAmount -= $discount;
-        } else {
-            $totalAmount -= $voucher->discount_value;
-        }
-    }
-
-    // ✅ Tạo đơn hàng
-    $order = Order::create([
-        'user_id' => $user->id ?? null,
-        'guest_user' => $user ? null : $phone,
-        'status' => 'Chờ xác nhận',
-        'total_amount' => $totalAmount,
-        'phone_number' => $phone,
-        'address' => $address,
-        'order_code' => strtoupper(Str::random(10)),
-        'voucher_id' => $voucher ? $voucher->id : null,
-    ]);
-
-    // ✅ Thêm từng sản phẩm vào đơn hàng
-    foreach ($request->order_items as $item) {
-        $variant = ProductVariant::find($item['product_variant_id']);
-        OrderItem::create([
-            'order_id' => $order->id,
-            'product_variant_id' => $item['product_variant_id'],
-            'quantity' => $item['quantity'],
-            'total_price' => $variant->price * $item['quantity'],
-        ]);
-
-        // ✅ Giảm tồn kho luôn
-        $variant->decrement('stock', $item['quantity']);
-    }
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Đặt hàng thành công',
-        'order_id' => $order->id
-    ]);
-}
-
 }
