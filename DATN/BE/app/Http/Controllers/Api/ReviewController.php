@@ -31,10 +31,10 @@ class ReviewController extends Controller
             }
 
             $reviews = Review::with(['user:id,name', 'order:id,order_code', 'product:id,name'])
-                            ->visible()
-                            ->byProductVariant($product_variant_id)
-                            ->orderBy('created_at', 'desc')
-                            ->paginate(10);
+                ->visible()
+                ->byProductVariant($product_variant_id)
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
 
             Log::info('Đã lấy danh sách đánh giá', [
                 'product_variant_id' => $product_variant_id,
@@ -105,9 +105,9 @@ class ReviewController extends Controller
             }
 
             $order = Order::where('id', $request->order_id)
-                          ->where('user_id', Auth::id())
-                          ->where('status', 'Giao hàng thành công')
-                          ->first();
+                ->where('user_id', Auth::id())
+                ->where('status', 'Giao hàng thành công')
+                ->first();
 
             if (!$order) {
                 return response()->json([
@@ -120,8 +120,8 @@ class ReviewController extends Controller
 
             // Kiểm tra xem biến thể sản phẩm có trong đơn hàng không
             $orderItem = $order->orderItems()
-                               ->where('product_variant_id', $product_variant_id)
-                               ->first();
+                ->where('product_variant_id', $product_variant_id)
+                ->first();
 
             if (!$orderItem) {
                 Log::info('Không tìm thấy biến thể sản phẩm trong đơn hàng', [
@@ -138,9 +138,9 @@ class ReviewController extends Controller
 
             // Kiểm tra xem người dùng đã đánh giá biến thể này trong đơn hàng này chưa
             $existingReview = Review::where('product_variant_id', $product_variant_id)
-                                    ->where('order_id', $request->order_id)
-                                    ->where('user_id', Auth::id())
-                                    ->first();
+                ->where('order_id', $request->order_id)
+                ->where('user_id', Auth::id())
+                ->first();
 
             if ($existingReview) {
                 return response()->json([
@@ -192,10 +192,10 @@ class ReviewController extends Controller
 
 
 
-  
-    
 
-   /**
+
+
+    /**
      * Lấy danh sách đơn hàng có thể đánh giá cho biến thể sản phẩm
      */
     public function getReviewableOrders($product_variant_id)
@@ -222,16 +222,16 @@ class ReviewController extends Controller
             }
 
             $orders = Order::where('user_id', Auth::id())
-                           ->where('status', 'Giao hàng thành công')
-                           ->whereHas('orderItems', function ($query) use ($product_variant_id) {
-                               $query->where('product_variant_id', $product_variant_id);
-                           })
-                           ->whereDoesntHave('reviews', function ($query) use ($product_variant_id) {
-                               $query->where('product_variant_id', $product_variant_id)
-                                     ->where('user_id', Auth::id());
-                           })
-                           ->select('id', 'order_code', 'created_at')
-                           ->get();
+                ->where('status', 'Giao hàng thành công')
+                ->whereHas('orderItems', function ($query) use ($product_variant_id) {
+                    $query->where('product_variant_id', $product_variant_id);
+                })
+                ->whereDoesntHave('reviews', function ($query) use ($product_variant_id) {
+                    $query->where('product_variant_id', $product_variant_id)
+                        ->where('user_id', Auth::id());
+                })
+                ->select('id', 'order_code', 'created_at')
+                ->get();
 
             Log::info('Đã lấy danh sách đơn hàng có thể đánh giá', [
                 'product_variant_id' => $product_variant_id,
@@ -257,7 +257,7 @@ class ReviewController extends Controller
     }
 
 
- /**
+    /**
      * Lấy chi tiết một đánh giá
      */
     public function show($id)
@@ -266,7 +266,7 @@ class ReviewController extends Controller
             Log::info('Lấy chi tiết đánh giá', ['review_id' => $id]);
 
             $review = Review::with(['product:id,name', 'productVariant', 'user:id,name', 'order:id,order_code'])
-                            ->findOrFail($id);
+                ->findOrFail($id);
 
             Log::info('Đã lấy chi tiết đánh giá', ['review_id' => $id]);
 
@@ -372,68 +372,169 @@ class ReviewController extends Controller
 
 
 
-    
     /**
-     * 📌 Xóa mềm đánh giá (Chỉ chủ sở hữu hoặc Admin)
+     * Xóa mềm đánh giá (Chủ sở hữu hoặc Admin)
      */
     public function destroy($id)
     {
-        $review = Review::findOrFail($id);
+        try {
+            Log::info('Xóa mềm đánh giá', ['review_id' => $id, 'user_id' => Auth::id()]);
 
-        if ($review->user_id !== Auth::id() && Auth::user()->role !== 'Admin') {
-            return response()->json(['message' => 'Bạn không có quyền xóa đánh giá này'], 403);
+            $review = Review::findOrFail($id);
+
+            if ($review->user_id !== Auth::id() && Auth::user()->role !== 'Admin') {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Bạn không có quyền xóa đánh giá này'
+                ], 403);
+            }
+
+            $review->delete();
+
+            Log::info('Đã xóa mềm đánh giá', ['review_id' => $id]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Đánh giá đã bị xóa'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi xóa mềm đánh giá: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+                'review_id' => $id,
+                'user_id' => Auth::id(),
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi xóa đánh giá. Vui lòng thử lại!'
+            ], 500);
         }
-
-        $review->delete();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Đánh giá đã bị xóa'
-        ]);
     }
 
     /**
-     * 📌 Khôi phục đánh giá đã bị xóa mềm (Chỉ Admin)
+     * Khôi phục đánh giá đã bị xóa mềm (Chỉ Admin)
      */
     public function restore($id)
     {
-        $review = Review::onlyTrashed()->findOrFail($id);
-        $review->restore();
+        try {
+            Log::info('Khôi phục đánh giá', ['review_id' => $id]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Đánh giá đã được khôi phục'
-        ]);
+            $review = Review::onlyTrashed()->findOrFail($id);
+            $review->restore();
+
+            Log::info('Đã khôi phục đánh giá', ['review_id' => $id]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Đánh giá đã được khôi phục'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi khôi phục đánh giá: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+                'review_id' => $id,
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi khôi phục đánh giá. Vui lòng thử lại!'
+            ], 500);
+        }
     }
 
     /**
-     * 📌 Lấy danh sách đánh giá đã bị xóa mềm (Chỉ Admin)
+     * Lấy danh sách đánh giá đã bị xóa mềm (Chỉ Admin)
      */
     public function trashed()
     {
-        $reviews = Review::onlyTrashed()->with('user:id,name')->paginate(10);
+        try {
+            Log::info('Lấy danh sách đánh giá đã xóa mềm');
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Danh sách đánh giá đã xóa mềm',
-            'data' => $reviews
-        ]);
+            $reviews = Review::onlyTrashed()
+                ->with('user:id,name')
+                ->paginate(10);
+
+            Log::info('Đã lấy danh sách đánh giá đã xóa mềm', [
+                'total_reviews' => $reviews->total(),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Danh sách đánh giá đã xóa mềm',
+                'data' => $reviews
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi lấy danh sách đánh giá đã xóa mềm: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi lấy danh sách đánh giá đã xóa mềm. Vui lòng thử lại!'
+            ], 500);
+        }
     }
 
     /**
-     * 📌 Lấy lịch sử đánh giá của khách hàng (có thể có nhiều lần đánh giá 1 sản phẩm)
+     * Lấy lịch sử đánh giá của một người dùng
      */
     public function history($user_id)
     {
-        $reviews = Review::where('user_id', $user_id)
-                         ->with(['product:id,name', 'order:id,order_code'])
-                         ->orderByDesc('created_at')
-                         ->paginate(10);
+        try {
+            Log::info('Lấy lịch sử đánh giá', ['user_id' => $user_id]);
+
+            $reviews = Review::where('user_id', $user_id)
+                ->with(['product:id,name', 'productVariant', 'order:id,order_code'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+
+            Log::info('Đã lấy lịch sử đánh giá', [
+                'user_id' => $user_id,
+                'total_reviews' => $reviews->total(),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Lịch sử đánh giá của khách hàng',
+                'data' => $reviews
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi lấy lịch sử đánh giá: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+                'user_id' => $user_id,
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi lấy lịch sử đánh giá. Vui lòng thử lại!'
+            ], 500);
+        }
+    }
+
+    public function allReviews()
+    {
+        $reviews = Review::with([
+            'user:id,name',
+            'order:id,order_code',
+            'product:id,name',
+            'productVariant:id,product_id,color_id,storage_id', // Chỉ định các trường cần thiết
+            'productVariant.color',  // Eager load quan hệ với VariantColor
+            'productVariant.storage' // Eager load quan hệ với VariantStorage
+        ])
+            ->select(
+                'id',
+                'user_id',
+                'order_id',
+                'product_id',
+                'product_variant_id',
+                'rating',
+                'comment',
+                'status',
+                'created_at'
+            )
+            ->get();
 
         return response()->json([
-            'status' => true,
-            'message' => 'Lịch sử đánh giá của khách hàng',
-            'data' => $reviews
+            'data' => $reviews,
+            'message' => 'Danh sách đánh giá',
         ]);
     }
+
+
+
 }
