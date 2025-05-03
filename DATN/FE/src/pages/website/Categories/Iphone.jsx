@@ -18,7 +18,9 @@ const Iphone = () => {
         .filter((item) => item.category?.name === "iPhone")
         .map((item, index) => {
           const imageUrl = item.image
-            ? `http://localhost:8000/storage/${item.image}`
+            ? item.image.startsWith("/storage/")
+              ? `http://localhost:8000${item.image}`
+              : `http://localhost:8000/storage/${item.image}`
             : null;
 
           return {

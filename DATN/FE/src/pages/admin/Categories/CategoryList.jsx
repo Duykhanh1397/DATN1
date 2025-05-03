@@ -48,8 +48,8 @@ const CategoryList = () => {
       messageApi.success("Xóa danh mục thành công");
       queryClient.invalidateQueries({ queryKey: ["CATEGORIES_KEY"] });
     },
-    onError: () => {
-      messageApi.error("Không thể xóa danh mục!");
+    onError: (error) => {
+      messageApi.error("Có lỗi xảy ra: " + error.message);
     },
   });
   const columns = [
@@ -125,8 +125,8 @@ const CategoryList = () => {
   return (
     <div>
       {contextHolder}
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-3xl font-semibold">Quản lý danh mục</h1>
+      <div className="mb-5">
+        <h1>Quản lý danh mục</h1>
         <Button type="default" onClick={showDrawer}>
           <PlusCircleOutlined /> Thêm danh mục
         </Button>

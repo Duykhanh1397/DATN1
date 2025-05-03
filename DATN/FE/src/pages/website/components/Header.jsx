@@ -1,8 +1,7 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import {
   Layout,
   Menu,
-  Input,
   Space,
   Badge,
   Dropdown,
@@ -13,15 +12,11 @@ import {
   Image,
   Spin,
 } from "antd";
-import {
-  SearchOutlined,
-  ShoppingCartOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
+import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
 import { useCart } from "../cart/Cart";
-
+import logo from "../../image/logo.png";
 const { Header } = Layout;
 
 const HeaderWebsite = () => {
@@ -37,17 +32,21 @@ const HeaderWebsite = () => {
     { label: <Link to="/iphone">iPhone</Link>, key: "iPhone" },
     { label: <Link to="/ipad">iPad</Link>, key: "iPad" },
     { label: <Link to="/macbook">MacBook</Link>, key: "MacBook" },
-    { label: <Link to="/applewatch">Apple Watch</Link>, key: "AppleWatch" },
-    { label: <Link to="/phukien">Phụ kiện</Link>, key: "Phụkiện" },
-    { label: <Link to="/">Tin tức</Link>, key: "news" },
+    { label: <Link to="/apple-watch">Apple Watch</Link>, key: "AppleWatch" },
+    { label: <Link to="/phu-kien">Phụ kiện</Link>, key: "Phụkiện" },
+    { label: <Link to="/news">Tin tức</Link>, key: "news" },
   ];
 
-  // ✅ Menu người dùng (Tùy thuộc vào trạng thái đăng nhập)
   const userMenu = {
     items: user
       ? [
           { label: `👤 ${user.name}`, key: "username", disabled: true },
+          user.role === "Admin" && {
+            label: <Link to="/admin">Quản trị</Link>,
+            key: "Admin",
+          },
           { label: <Link to="/profile">Hồ sơ</Link>, key: "profile" },
+          { label: <Link to="/my-order">Đơn hàng</Link>, key: "myorder" },
           {
             label: <Link to="/change-password">Đổi mật khẩu</Link>,
             key: "change-password",
@@ -63,7 +62,7 @@ const HeaderWebsite = () => {
             ),
             key: "logout",
           },
-        ]
+        ].filter(Boolean)
       : [
           { label: <Link to="/login">Đăng nhập</Link>, key: "login" },
           { label: <Link to="/register">Đăng ký</Link>, key: "register" },
@@ -106,14 +105,9 @@ const HeaderWebsite = () => {
           <div style={{ textAlign: "right", marginBottom: 10 }}>
             <strong>{Number(totalPrice).toLocaleString("vi-VN")} VNĐ ₫</strong>
           </div>
-          <Space style={{ width: "100%", justifyContent: "center" }}>
+          <Space style={{ width: "100%", justifyContent: "right" }}>
             <Link to="/cart">
               <Button style={{ width: 120 }}>GIỎ HÀNG</Button>
-            </Link>
-            <Link to="/checkout">
-              <Button type="primary" style={{ width: 120 }}>
-                THANH TOÁN
-              </Button>
             </Link>
           </Space>
         </>
@@ -124,28 +118,44 @@ const HeaderWebsite = () => {
   return (
     <Header
       style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "80px",
+        zIndex: 1000,
         backgroundColor: "#000",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 50px",
-        height: 64,
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
       }}
     >
-      {/* ✅ Logo */}
       <div
         className="logo"
-        style={{ color: "#fff", fontWeight: "bold", fontSize: "22px" }}
+        style={{
+          width: "200px",
+        }}
       >
-        <Link to={"/"}>Ibee</Link>
+        <Link to={"/"}>
+          <img
+            src={logo}
+            alt="Ibee"
+            style={{
+              objectFit: "contain",
+              height: "80px",
+              width: "150px",
+            }}
+          />
+        </Link>
       </div>
 
-      {/* ✅ Menu chính */}
       <Menu
         theme="dark"
         mode="horizontal"
         style={{
-          backgroundColor: "transparent",
+          // backgroundColor: "transparent",
           flex: 1,
           justifyContent: "center",
           fontSize: "16px",
@@ -157,21 +167,7 @@ const HeaderWebsite = () => {
         ))}
       </Menu>
 
-      {/* ✅ Khu vực phải */}
       <Space size="large">
-        {/* <Input
-          placeholder="Tìm kiếm sản phẩm..."
-          prefix={<SearchOutlined />}
-          style={{
-            backgroundColor: "#222",
-            color: "#fff",
-            borderRadius: 20,
-            width: 200,
-            border: "none",
-            padding: "4px 12px",
-          }}
-        /> */}
-
         <Dropdown menu={userMenu} trigger={["hover"]}>
           <div
             style={{
@@ -184,7 +180,11 @@ const HeaderWebsite = () => {
           </div>
         </Dropdown>
 
-        <Popover placement="bottomRight" content={cartContent} trigger="click">
+        <Popover
+          placement="bottomRight"
+          content={cartContent}
+          trigger={["hover"]}
+        >
           <Badge count={cartItems.length} size="large">
             <div style={{ cursor: "pointer" }}>
               <ShoppingCartOutlined
