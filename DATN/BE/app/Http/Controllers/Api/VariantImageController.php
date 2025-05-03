@@ -21,11 +21,11 @@ class VariantImageController extends Controller
     //             ->where('product_variant_id', $product_variant_id)
     //             ->orderBy('created_at', 'desc')
     //             ->get();
-    
+
     //         if ($images->isEmpty()) {
     //             return response()->json(['status' => false, 'message' => 'Không có ảnh nào'], 404);
     //         }
-    
+
     //         // Format kết quả trả ra
     //         $data = $images->map(function ($image) {
     //             return [
@@ -35,7 +35,7 @@ class VariantImageController extends Controller
     //                 'created_at' => $image->created_at,
     //             ];
     //         });
-    
+
     //         return response()->json([
     //             'status' => true,
     //             'message' => 'Danh sách ảnh',
@@ -46,7 +46,7 @@ class VariantImageController extends Controller
     //     }
     // }
 
-public function index($product_variant_id)
+    public function index($product_variant_id)
     {
         try {
             // Lấy ảnh theo biến thể sản phẩm và sắp xếp mới nhất
@@ -98,16 +98,16 @@ public function index($product_variant_id)
                 'message' => 'Không nhận được file ảnh!'
             ], 400);
         }
-    
+
         // Upload file vào storage
         $imagePath = $request->file('image')->store('variant_images', 'public');
-    
+
         // Lưu đường dẫn vào DB
         $image = VariantImage::create([
             'product_variant_id' => $product_variant_id,
             'image_url' => $imagePath, // Lưu đường dẫn file
         ]);
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Ảnh đã được tải lên!',
@@ -129,14 +129,14 @@ public function index($product_variant_id)
                 ->where('product_variant_id', $product_variant_id)
                 ->where('id', $image_id)
                 ->first();
-    
+
             if (!$image) {
                 return response()->json([
                     'status' => false,
                     'message' => "Không tìm thấy ảnh ID: $image_id cho product_variant ID: $product_variant_id"
                 ], 404);
             }
-    
+
             return response()->json([
                 'status' => true,
                 'message' => 'Thông tin ảnh',
@@ -157,63 +157,6 @@ public function index($product_variant_id)
         }
     }
 
-    /**
-     * 📌 Cập nhật ảnh mới
-     */
-    public function update(Request $request, $product_variant_id, $id)
-    {
-        // Kiểm tra xem ảnh có thuộc về biến thể sản phẩm không
-        $image = VariantImage::where('id', $id)->where('product_variant_id', $product_variant_id)->first();
-
-        if (!$image) {
-            return response()->json([
-                'status' => false,
-                'message' => "Không tìm thấy ảnh với ID: $id cho product_variant ID: $product_variant_id"
-            ], 404);
-        }
-
-        // Kiểm tra request có file ảnh không
-        if (!$request->hasFile('image')) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Không nhận được file ảnh từ request!'
-            ], 400);
-        }
-
-        // Validate file upload
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:4096'
-        ]);
-
-        // Xóa ảnh cũ nếu tồn tại trong storage
-        if ($image->image_url) {
-            Storage::disk('public')->delete($image->image_url);
-        }
-
-        // Lưu file mới vào storage
-        $newImagePath = $request->file('image')->store('variant_images', 'public');
-
-        if (!$newImagePath) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Lưu file thất bại!'
-            ], 500);
-        }
-
-        // Cập nhật đường dẫn ảnh mới vào database
-        $image->image_url = $newImagePath;
-        $image->save();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Cập nhật ảnh thành công!',
-            'data' => [
-                'id' => $image->id,
-                'product_variant_id' => $image->product_variant_id,
-                'image_url' => asset('storage/' . $image->image_url),
-            ]
-        ]);
-    }
 
     /**
      * 📌 Xóa mềm ảnh
