@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -6,75 +7,96 @@ use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    // 1. Xử lý Thanh Toán VNPay
-    public function payment(Request $request, $orderId)
+    /**
+     * 📌 1. Xử lý Thanh Toán VNPay
+     */
+    public function vnpay_payment(Request $request)
     {
-        $order = Order::findOrFail($orderId);
-    
-        // Kiểm tra nếu đơn hàng đã thanh toán
-        if ($order->payment_status == 'Thanh toán thành công') {
-            return response()->json(['message' => 'Đơn hàng đã thanh toán'], 400);
-        }
-    
-        if ($order->payment_method == 'COD') {
-            // Nếu chọn COD, chỉ cập nhật trạng thái thanh toán là "Chờ thanh toán"
-            $order->update(['payment_status' => 'Chờ thanh toán']);
-            return response()->json(['message' => 'Đơn hàng sẽ thanh toán khi nhận hàng']);
-        }
-    
-        // Gửi yêu cầu thanh toán tới VNPay
-        $vnp_TxnRef = strtoupper(Str::random(10)); // Mã đơn hàng
-        $vnp_Amount = $order->total_amount * 100; // VNPay yêu cầu nhân với 100
-        $vnp_Url = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'; // URL của VNPay
-        $vnp_SecureHash = 'VNPay_SECURE_HASH'; // Lấy từ VNPay
-    
-        // Thực hiện yêu cầu API từ VNPay
-        $response = Http::asForm()->post($vnp_Url, [
-            'vnp_TxnRef' => $vnp_TxnRef,
-            'vnp_Amount' => $vnp_Amount,
-            'vnp_Currency' => 'VND',
-            'vnp_OrderInfo' => 'Thanh toán đơn hàng ' . $order->order_code,
-            'vnp_Locale' => 'vn',
-            'vnp_ReturnUrl' => route('payment.result', $vnp_TxnRef), // URL trả về sau khi thanh toán thành công
-            'vnp_SecureHash' => $vnp_SecureHash,
-        ]);
-    
-        return redirect($response->json()['url']);
-    }
-    
+        $data = $request->all();
+        $code_cart = rand(00, 9999);
+        $vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+        $vnp_Returnurl = "http://localhost:5173/payment-return";;
+        $vnp_TmnCode = "UETPMW0E"; //Mã website tại VNPAY
+        $vnp_HashSecret = "9W6GQVGNQ2Y177112JVPZQK8ZFBXYH37"; //Chuỗi bí mật
 
-    // 2. Nhận Kết Quả Thanh Toán Từ VNPay
-    public function paymentResult(Request $request, $vnp_TxnRef)
-    {
-        $order = Order::where('order_code', $vnp_TxnRef)->first();
+        $vnp_TxnRef = $code_cart; //Mã đơn hàng. Trong thực tế Merchant cần insert đơn hàng vào DB và gửi mã này sang VNPAY
+        $vnp_OrderInfo = 'Thanh toán đơn hàng test';
+        $vnp_OrderType = 'billpayment';
+        $vnp_Amount = $data['total_vnpay'] * 100;
+        $vnp_Locale = 'vn';
+        // $vnp_BankCode = 'NCB';
+        $vnp_IpAddr = $_SERVER['REMOTE_ADDR'];
 
-        // Kiểm tra nếu đơn hàng đã thanh toán
-        if ($order->status == 'completed') {
-            return response()->json(['message' => 'Đơn hàng đã thanh toán'], 200);
+        $inputData = array(
+            "vnp_Version" => "2.1.0",
+            "vnp_TmnCode" => $vnp_TmnCode,
+            "vnp_Amount" => $vnp_Amount,
+            "vnp_Command" => "pay",
+            "vnp_CreateDate" => date('YmdHis'),
+            "vnp_CurrCode" => "VND",
+            "vnp_IpAddr" => $vnp_IpAddr,
+            "vnp_Locale" => $vnp_Locale,
+            "vnp_OrderInfo" => $vnp_OrderInfo,
+            "vnp_OrderType" => $vnp_OrderType,
+            "vnp_ReturnUrl" => $vnp_Returnurl,
+            "vnp_TxnRef" => $vnp_TxnRef,
+
+        );
+
+        if (isset($vnp_BankCode) && $vnp_BankCode != "") {
+            $inputData['vnp_BankCode'] = $vnp_BankCode;
+        }
+        if (isset($vnp_Bill_State) && $vnp_Bill_State != "") {
+            $inputData['vnp_Bill_State'] = $vnp_Bill_State;
         }
 
-        // Kiểm tra kết quả từ VNPay
-        if ($request->input('vnp_ResponseCode') == '00') {
-            // Thanh toán thành công
-            $order->update(['status' => 'completed']);
+        //var_dump($inputData);
+        ksort($inputData);
+        $query = "";
+        $i = 0;
+        $hashdata = "";
+        foreach ($inputData as $key => $value) {
+            if ($i == 1) {
+                $hashdata .= '&' . urlencode($key) . "=" . urlencode($value);
+            } else {
+                $hashdata .= urlencode($key) . "=" . urlencode($value);
+                $i = 1;
+            }
+            $query .= urlencode($key) . "=" . urlencode($value) . '&';
+        }
 
-            // Lưu thông tin thanh toán
-            Payment::create([
-                'order_id' => $order->id,
-                'payment_date' => now(),
-                'amount' => $order->total_amount,
-                'payment_method' => 'VNPay',
-                'payment_status' => 'success',
-            ]);
-
-            return response()->json(['message' => 'Thanh toán thành công'], 200);
+        $vnp_Url = $vnp_Url . "?" . $query;
+        if (isset($vnp_HashSecret)) {
+            $vnpSecureHash =   hash_hmac('sha512', $hashdata, $vnp_HashSecret); //
+            $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
+        }
+        $returnData = array(
+            'code' => '00',
+            'message' => 'success',
+            'data' => $vnp_Url
+        );
+        if (isset($_POST['redirect'])) {
+            header('Location: ' . $vnp_Url);
+            die();
         } else {
-            // Thanh toán thất bại
-            return response()->json(['message' => 'Thanh toán thất bại'], 400);
+            echo json_encode($returnData);
         }
     }
-}
+
+
+
+
+
+    /**
+     * 📌 2. Xử lý Kết Quả Thanh Toán Từ VNPay
+     */
+    public function vnpayReturn(Request $request)
+    {
+        // Redirect về frontend (bạn có thể ghi log chi tiết nếu cần)
+        return redirect()->to(env('FRONTEND_URL', 'http://localhost:5173') . "/payment-return?" . http_build_query($request->all()));
+    }

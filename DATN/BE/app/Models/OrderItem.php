@@ -9,10 +9,20 @@ class OrderItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['order_id', 'value_id', 'quantity', 'total_price'];
+    protected $fillable = [
+        'order_id',
+        'product_variant_id',
+        'quantity',
+        'total_price'
+    ];
+
+    protected $casts = [
+        'quantity'    => 'integer',
+        'total_price' => 'float',
+    ];
 
     /**
-     * Một mục trong đơn hàng thuộc về một đơn hàng
+     * ✅ Một mục trong đơn hàng thuộc về một đơn hàng
      */
     public function order()
     {
@@ -20,18 +30,18 @@ class OrderItem extends Model
     }
 
     /**
-     * Một mục trong đơn hàng thuộc về một giá trị biến thể (VariantValue)
+     * ✅ Một mục trong đơn hàng thuộc về một biến thể sản phẩm (ProductVariant)
      */
-    public function variantValue()
+    public function productVariant()
     {
-        return $this->belongsTo(VariantValue::class, 'value_id');
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     /**
-     * Lấy tổng giá trị của sản phẩm trong đơn hàng
+     * ✅ Accessor: Lấy tổng giá của mục đơn hàng dựa vào quantity và giá product_variant (nếu cần tính động)
      */
-    public function getTotalPriceAttribute()
+    public function getTotalPriceDynamicAttribute()
     {
-        return $this->quantity * ($this->variantValue->price ?? 0);
+        return $this->quantity * optional($this->productVariant)->price ?? 0;
     }
 }

@@ -12,22 +12,16 @@ class Product extends Model
 
     protected $table = 'products'; // Xác định tên bảng
 
-    protected $fillable = ['category_id', 'name', 'description', 'status'];
+    protected $fillable = ['category_id', 'name', 'description', 'status', 'price', 'image'];
 
     protected $casts = [
         'deleted_at' => 'datetime', // Chuyển deleted_at thành Carbon datetime
     ];
 
     // ✅ Đặt giá trị mặc định nếu chưa có
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($product) {
-            if (!$product->status) {
-                $product->status = 'Hoạt động'; // Giá trị mặc định
-            }
-        });
-    }
+    protected $attributes = [
+        'status' => 'Hoạt động'
+    ];
 
     // ✅ Quan hệ với bảng `categories`
     public function category()
@@ -39,12 +33,6 @@ class Product extends Model
     public function variants()
     {
         return $this->hasMany(ProductVariant::class, 'product_id', 'id');
-    }
-
-    // ✅ Quan hệ với `variant_images`
-    public function images()
-    {
-        return $this->hasMany(VariantImage::class, 'product_id', 'id');
     }
 
     // ✅ Scope lọc sản phẩm đang hoạt động

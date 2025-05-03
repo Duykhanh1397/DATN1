@@ -72,26 +72,92 @@
 // }
 
 
+
+
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class Voucher extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'discount_type', 'discount_value', 'min_order_value',
-        'max_discount', 'usage_limit', 'used_count', 'status'
+        'code',
+        'discount_type',
+        'discount_value',
+        'min_order_value',
+        'max_discount',
+        'usage_limit',
+        'used_count',
+        'start_date',
+        'end_date',
+        'status'
     ];
+
+    protected $casts = [
+        'discount_value' => 'float',
+        'min_order_value' => 'float',
+        'max_discount' => 'float',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
+
+    // Quan hệ với bảng voucher_user
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'voucher_user')
+                    ->withPivot('used_at')
+                    ->withTimestamps();
+    }
 
     public function isValid()
     {
-        return $this->status === 'Hoạt động' && $this->used_count < $this->usage_limit;
+        $now = Carbon::now();
+
+        return $this->status === 'Hoạt động'
+            && $this->used_count < $this->usage_limit
+            && (!$this->start_date || $this->start_date->isBefore($now))
+            && (!$this->end_date || $this->end_date->isAfter($now));
     }
-    public function orders()
+
+    public function canApply($orderTotal)
     {
-        return $this->hasMany(Order::class);
+        return $this->isValid() && 
+            (!$this->min_order_value || $orderTotal >= $this->min_order_value);
+    }
+
+    public function calculateDiscount($orderTotal)
+    {
+        if (!$this->canApply($orderTotal)) {
+            return 0;
+        }
+
+        if ($this->discount_type === 'percentage') {
+            $discount = ($orderTotal * $this->discount_value) / 100;
+            if ($this->max_discount) {
+                $discount = min($discount, $this->max_discount);
+            }
+            return min($discount, $orderTotal);
+        }
+
+        return min($this->discount_value, $orderTotal);
+    }
+
+    public function incrementUsage()
+    {
+        $this->increment('used_count');
+        if ($this->used_count >= $this->usage_limit) {
+            $this->update(['status' => 'Hết hạn']);
+        }
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'Hoạt động');
     }
 }
