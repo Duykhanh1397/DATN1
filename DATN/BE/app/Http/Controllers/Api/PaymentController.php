@@ -100,4 +100,33 @@ class PaymentController extends Controller
         // Redirect về frontend (bạn có thể ghi log chi tiết nếu cần)
         return redirect()->to(env('FRONTEND_URL', 'http://localhost:5173') . "/payment-return?" . http_build_query($request->all()));
     }
+
+
+
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'order_id' => 'required|exists:orders,id',
+                'amount' => 'required|numeric|min:0',
+                'payment_method' => 'required|in:COD,VNPay',
+                'payment_status' => 'required|in:Chờ thanh toán,Thanh toán thành công,Thanh toán thất bại',
+                'payment_date' => 'required|date',
+            ]);
+
+            $payment = Payment::create($validated);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Lưu thanh toán thành công',
+                'payment' => $payment,
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Lỗi lưu thanh toán: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Lỗi khi lưu thanh toán: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
