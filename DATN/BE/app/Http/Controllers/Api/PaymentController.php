@@ -100,3 +100,4 @@ class PaymentController extends Controller
         // Redirect về frontend (bạn có thể ghi log chi tiết nếu cần)
         return redirect()->to(env('FRONTEND_URL', 'http://localhost:5173') . "/payment-return?" . http_build_query($request->all()));
     }
+}
