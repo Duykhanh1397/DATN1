@@ -11,14 +11,16 @@ const AppleWatch = () => {
   const { data: products, isLoading } = useQuery({
     queryKey: ["IPHONE_PRODUCTS"],
     queryFn: async () => {
-      const { data } = await API.get("/admin/products");
+      const { data } = await API.get("/products");
 
       // Lọc sản phẩm thuộc danh mục
       return data.data
         .filter((item) => item.category?.name === "Apple Watch")
         .map((item, index) => {
           const imageUrl = item.image
-            ? `http://localhost:8000/storage/${item.image}`
+            ? item.image.startsWith("/storage/")
+              ? `http://localhost:8000${item.image}`
+              : `http://localhost:8000/storage/${item.image}`
             : null;
 
           return {
