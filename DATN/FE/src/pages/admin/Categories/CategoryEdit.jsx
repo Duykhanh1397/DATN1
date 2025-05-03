@@ -11,30 +11,54 @@ const CategoryEdit = ({ category }) => {
   const [messageApi, contextHolder] = message.useMessage();
 
   if (!category) return <Skeleton active />;
+
   const { mutate } = useMutation({
     mutationFn: async (formData) => {
-      await API.put(`/admin/categories/${category.id}`, formData);
+      const response = await API.put(
+        `/admin/categories/${category.id}`,
+        formData
+      );
+      return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (responseData) => {
+      const updatedCategory = responseData.data;
+      console.log("Dữ liệu mới từ backend:", updatedCategory);
+
+      form.setFieldsValue({
+        name: updatedCategory.name,
+        description: updatedCategory.description,
+        status: updatedCategory.status,
+      });
+
       messageApi.success("Cập nhật danh mục thành công");
       queryClient.invalidateQueries({ queryKey: ["CATEGORIES_KEY"] });
-      form.resetFields();
     },
     onError: (error) => {
-      messageApi.error("Cập nhật thất bại: " + error.message);
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra";
+      const errorDetails = error.response?.data?.errors;
+
+      messageApi.error(errorMessage);
+      if (errorDetails) {
+        Object.values(errorDetails).forEach((errorArray) => {
+          errorArray.forEach((errorMsg) => {
+            messageApi.error(errorMsg);
+          });
+        });
+      }
     },
   });
 
   return (
     <div>
       {contextHolder}
-      <h1 className="text-3xl font-semibold mb-5">Cập nhật danh mục</h1>
+      <h1 className="mb-5">Cập nhật danh mục</h1>
       <Form
         form={form}
         initialValues={{ ...category }}
         name="basic"
         layout="vertical"
         onFinish={(formData) => {
+          console.log("Dữ liệu gửi đi:", formData);
           mutate(formData);
         }}
       >
