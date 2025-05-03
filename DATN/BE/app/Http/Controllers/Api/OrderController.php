@@ -181,6 +181,11 @@ class OrderController extends Controller
      *     "voucher_code": optional
      *   }
      */
+
+
+
+
+
     public function create(Request $request)
     {
         try {
@@ -408,6 +413,16 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+
+
+
+
+
+
+
+
+
 
     public function update(Request $request, $id)
     {
