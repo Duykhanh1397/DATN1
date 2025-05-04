@@ -24,10 +24,9 @@ const CartPage = () => {
     queryKey: ["CART_ITEM"],
     queryFn: async () => {
       const { data } = await API.get("/cart/items");
-      console.log("Fetched cart:", data);
       return data.data.map((item, index) => ({
         ...item,
-        key: item.cart_item_id, // Khóa chính trong bảng
+        key: item.cart_item_id,
         stt: index + 1,
       }));
     },
@@ -36,15 +35,15 @@ const CartPage = () => {
   // Cập nhật số lượng
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ cart_item_id, quantity }) => {
-      // API update quantity
-      const res = await API.put(`/cart/items/${cart_item_id}`, { quantity });
-      return res.data;
+      const { data } = await API.put(`/cart/items/${cart_item_id}`, {
+        quantity,
+      });
+      return data;
     },
     onSuccess: () => {
-      messageApi.success("Cập nhật số lượng thành công");
       queryClient.invalidateQueries(["CART_ITEM"]);
     },
-    onError: () => {
+    onError: (error) => {
       messageApi.error("Cập nhật số lượng thất bại");
     },
   });
@@ -52,30 +51,22 @@ const CartPage = () => {
   // Tăng số lượng
   const increaseQuantityMutation = useMutation({
     mutationFn: async (cart_item_id) => {
-      const res = await API.put(`/cart/items/${cart_item_id}/increase`);
-      return res.data;
+      const { data } = await API.put(`/cart/items/${cart_item_id}/increase`);
+      return data;
     },
     onSuccess: () => {
-      messageApi.success("Tăng số lượng thành công");
       queryClient.invalidateQueries(["CART_ITEM"]);
-    },
-    onError: () => {
-      messageApi.error("Tăng số lượng thất bại");
     },
   });
 
   // Giảm số lượng
   const decreaseQuantityMutation = useMutation({
     mutationFn: async (cart_item_id) => {
-      const res = await API.put(`/cart/items/${cart_item_id}/decrease`);
-      return res.data;
+      const { data } = await API.put(`/cart/items/${cart_item_id}/decrease`);
+      return data;
     },
     onSuccess: () => {
-      messageApi.success("Giảm số lượng thành công");
       queryClient.invalidateQueries(["CART_ITEM"]);
-    },
-    onError: () => {
-      messageApi.error("Giảm số lượng thất bại");
     },
   });
 
@@ -88,8 +79,8 @@ const CartPage = () => {
       messageApi.success("Xóa sản phẩm thành công");
       queryClient.invalidateQueries(["CART_ITEM"]);
     },
-    onError: () => {
-      messageApi.error("Xóa sản phẩm thất bại");
+    onError: (error) => {
+      messageApi.error("Xóa sản phẩm thất bại:" + error.message);
     },
   });
 
@@ -104,31 +95,8 @@ const CartPage = () => {
       messageApi.success("Xóa toàn bộ giỏ hàng thành công");
       queryClient.invalidateQueries(["CART_ITEM"]);
     },
-    onError: () => {
-      messageApi.error("Xóa toàn bộ thất bại");
-    },
-  });
-
-  //Tạo đơn hàng
-  const order_items = cartItems
-    .filter((item) => selectedRowKeys.includes(item.cart_item_id))
-    .map((item) => ({
-      product_variant_id: item.product_variant?.id,
-      quantity: item.quantity,
-    }));
-  console.log(order_items);
-  const createOrderMutation = useMutation({
-    mutationFn: async (orderData) => {
-      const res = await API.post("/orders", orderData);
-      return res.data;
-    },
-    onSuccess: (data) => {
-      messageApi.success("Đặt hàng thành công!");
-      queryClient.invalidateQueries(["CART_ITEM"]);
-      navigate(`/order/${data.order_id}`);
-    },
-    onError: () => {
-      messageApi.error("Đặt hàng thất bại. Vui lòng thử lại!");
+    onError: (error) => {
+      messageApi.error("Xóa toàn bộ thất bại:" + error.message);
     },
   });
 
@@ -178,15 +146,23 @@ const CartPage = () => {
       title: "TÊN SẢN PHẨM",
       dataIndex: "product_variant.name",
       key: "name",
-      render: (_, item) => (
-        <>
-          <div className="fw-semibold">{item.product_variant.name}</div>
-          <div className="text-muted">
-            Màu: {item.product_variant.color} | Dung lượng:
-            {item.product_variant.storage}
-          </div>
-        </>
-      ),
+      render: (_, item) => {
+        const hasColor = item.product_variant.color;
+        const hasStorage = item.product_variant.storage;
+
+        return (
+          <>
+            <div className="fw-semibold">{item.product_variant.name}</div>
+            {(hasColor || hasStorage) && (
+              <div className="text-muted">
+                {hasColor && `Màu: ${item.product_variant.color}`}
+                {hasColor && hasStorage && " - "}
+                {hasStorage && `Dung lượng: ${item.product_variant.storage}`}
+              </div>
+            )}
+          </>
+        );
+      },
     },
     {
       title: "GIÁ SẢN PHẨM",
@@ -293,9 +269,11 @@ const CartPage = () => {
       ),
     },
   ];
+
   if (isLoading) {
     return <div className="text-center">Đang tải...</div>;
   }
+
   return (
     <div className="container p-5 w-100">
       {contextHolder}
@@ -354,19 +332,22 @@ const CartPage = () => {
               Tiếp tục mua sắm
             </Button>
             <Button
+              onClick={() =>
+                navigate("/checkout", {
+                  state: {
+                    selectedItems: cartItems.filter((item) =>
+                      selectedRowKeys.includes(item.cart_item_id)
+                    ),
+                  },
+                })
+              }
               type="primary"
               disabled={selectedRowKeys.length === 0}
               danger
               size="large"
-              onClick={() => {
-                console.log("order_items gửi đi", order_items);
-                createOrderMutation.mutate({
-                  order_items: order_items,
-                });
-              }}
               style={{ width: "40%" }}
             >
-              Thanh toán
+              Mua hàng
             </Button>
           </div>
         </div>
