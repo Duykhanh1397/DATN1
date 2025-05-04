@@ -42,7 +42,9 @@ const ProductList = () => {
 
       return data.data.map((item, index) => {
         const imageUrl = item.image
-          ? `http://localhost:8000/storage/${item.image}` // Thay domain backend của bạn vào đây
+          ? item.image.startsWith("/storage/")
+            ? `http://localhost:8000${item.image}`
+            : `http://localhost:8000/storage/${item.image}`
           : null;
 
         return {
@@ -77,15 +79,15 @@ const ProductList = () => {
       messageApi.success("Xóa sản phẩm thành công");
       queryClient.invalidateQueries({ queryKey: ["PRODUCTS_KEY"] });
     },
-    onError: () => {
-      messageApi.error("Không thể xóa sản phẩm!");
+    onError: (error) => {
+      messageApi.error("Có lỗi xảy ra: " + error.message);
     },
   });
 
   // Cấu hình các cột hiển thị cho bảng
   const columns = [
     {
-      title: "STT",
+      title: "#",
       dataIndex: "stt",
       key: "stt",
       width: 60,
@@ -111,6 +113,7 @@ const ProductList = () => {
     },
     {
       title: "Mô tả",
+      width: 300,
       dataIndex: "description",
       key: "description",
       render: (description) => description || "-",
@@ -209,8 +212,8 @@ const ProductList = () => {
       {contextHolder}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-3xl font-semibold">Quản lý sản phẩm</h1>
+      <div className="mb-5">
+        <h1>Quản lý sản phẩm</h1>
         <Button
           type="default"
           onClick={() => setIsDrawerVisible(true)}
