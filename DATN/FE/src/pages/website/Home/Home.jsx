@@ -68,7 +68,7 @@ const Home = () => {
     <>
       <Banner />
 
-      {/* Danh mục */}
+      
       <div style={{ backgroundColor: "#333", padding: "20px 0" }}>
         <section className="container mb-4">
           <div className="d-flex justify-content-between align-items-center">
@@ -113,16 +113,11 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Sản phẩm nổi bật */}
+        
         <section className="font-poppins container mb-4">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h2 className="fs-2 fw-semibold text-light">Sản Phẩm</h2>
-            {/* <Link
-              to="/products"
-              className="btn border border-warning text-light custom-hover"
-            >
-              Xem tất cả
-            </Link> */}
+
           </div>
 
           <div className="row g-3">
