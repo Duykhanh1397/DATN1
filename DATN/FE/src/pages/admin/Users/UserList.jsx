@@ -27,9 +27,9 @@ const UserList = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["USERS_KEY"],
     queryFn: async () => {
-      const response = await API.get("/admin/users");
+      const { data } = await API.get("/admin/users");
       return (
-        response.data?.data?.map((user, index) => ({
+        data?.data?.map((user, index) => ({
           ...user,
           key: user.id,
           stt: index + 1,
@@ -40,14 +40,14 @@ const UserList = () => {
 
   const { mutate } = useMutation({
     mutationFn: async (id) => {
-      await API.delete(`/admin/users/${id}/force-delete`);
+      await API.delete(`/admin/users/${id}/soft`);
     },
     onSuccess: () => {
-      messageApi.success("Xóa người dùng thành công!");
+      messageApi.success("Xóa tài khoản thành công!");
       queryClient.invalidateQueries({ queryKey: ["USERS_KEY"] });
     },
-    onError: () => {
-      messageApi.error("Không thể xóa người dùng.");
+    onError: (error) => {
+      messageApi.error("Có lỗi xảy ra: " + error.message);
     },
   });
 
@@ -83,7 +83,7 @@ const UserList = () => {
       render: (_, user) => (
         <Space>
           <Popconfirm
-            title="Xóa người dùng"
+            title="Xóa tài khoản"
             description="Bạn có chắc chắn muốn xóa không?"
             onConfirm={() => mutate(user.id)}
             okText="Có"
@@ -125,8 +125,8 @@ const UserList = () => {
   return (
     <div>
       {contextHolder}
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-3xl font-semibold">Quản lý người dùng</h1>
+      <div className="mb-5">
+        <h1>Quản lý người dùng</h1>
       </div>
 
       <Space style={{ marginBottom: 20 }}>

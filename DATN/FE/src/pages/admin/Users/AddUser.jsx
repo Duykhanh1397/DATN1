@@ -27,14 +27,14 @@ const AddUser = () => {
       setTimeout(() => navigate("/admin/users"), 2000);
     },
     onError: (error) => {
-      setError(error.response?.data?.message || "Không thể tạo user.");
+      messageApi.error("Có lỗi xảy ra: " + error.message);
     },
   });
 
   return (
     <div>
       {contextHolder}
-      <h1 className="text-3xl font-semibold mb-5">Thêm mới người dùng</h1>
+      <h1 className="mb-5">Thêm mới người dùng</h1>
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <Form

@@ -1,0 +1,210 @@
+/* Nền tối và font chữ */
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+/* Hiệu ứng hover cho thẻ bài viết */
+.card.hover-lift {
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card.hover-lift:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Hiệu ứng cho ảnh */
+.image-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.image-wrapper img {
+  transition: transform 0.5s ease;
+}
+
+.image-wrapper:hover img {
+  transform: scale(1.05);
+}
+
+/* Hiệu ứng phóng to cho ảnh trong chi tiết */
+.image-pop {
+  animation: imagePop 0.8s ease forwards;
+}
+
+@keyframes imagePop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Màu sắc cho danh mục */
+.category-iphone {
+  color: #ff6f61;
+  background-color: rgba(255, 111, 97, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.category-ipad {
+  color: #4a90e2;
+  background-color: rgba(74, 144, 226, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.category-watch {
+  color: #28a745;
+  background-color: rgba(40, 167, 69, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.category-phụ kiện {
+  color: #f1c40f;
+  background-color: rgba(241, 196, 15, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* Hiệu ứng cho input và select */
+.form-control,
+.form-select {
+  background-color: #2a2a2a !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  border-color: #ffffff !important;
+}
+
+/* Hiệu ứng trượt cho input */
+.input-slide {
+  animation: slideIn 0.6s ease forwards;
+}
+
+@keyframes slideIn {
+  0% {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Hiệu ứng ánh sáng cho tiêu đề */
+.title-glow {
+  position: relative;
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Hiệu ứng ánh sáng cho nút Quay lại */
+.glow-on-hover {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.glow-on-hover:hover {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border-color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+/* Đảm bảo nội dung chi tiết bài viết hiển thị đẹp */
+.bg-dark {
+  background-color: #222222 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hiệu ứng lộ nội dung khi chuyển đổi */
+.content-reveal {
+  animation: reveal 1s ease forwards;
+}
+
+@keyframes reveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+/* Hiệu ứng trượt nội dung từ trái sang */
+.content-slide-in {
+  animation: slideInLeft 0.8s ease forwards;
+}
+
+@keyframes slideInLeft {
+  0% {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Điều chỉnh khoảng cách và kiểu chữ */
+h2,
+h4,
+h6 {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+p,
+li {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #d1d1d1;
+}
+
+/* Thông tin meta (ngày đăng, thời gian đọc) */
+.meta-info {
+  font-size: 0.9rem;
+  color: #a1a1a1;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

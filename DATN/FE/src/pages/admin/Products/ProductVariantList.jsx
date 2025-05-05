@@ -32,6 +32,7 @@ const ProductVariantList = () => {
     queryKey: ["PRODUCT_VARIANTS_KEY"],
     queryFn: async () => {
       const { data } = await API.get("/admin/productvariants");
+      console.log(data);
       return data.data.map((item, index) => {
         const imageUrl =
           item.images && item.images.length > 0
@@ -40,6 +41,7 @@ const ProductVariantList = () => {
 
         return {
           key: item.id,
+          id: item.id,
           stt: index + 1,
           productVariantId: item.id,
           image: imageUrl,
@@ -47,7 +49,7 @@ const ProductVariantList = () => {
           category: item.product?.category?.name,
           color: item.color?.value,
           storage: item.storage?.value,
-          price: parseFloat(item.price),
+          price: item.price,
           stock: item.stock,
           status: item.product?.status,
           productId: item.product_id,
@@ -67,21 +69,21 @@ const ProductVariantList = () => {
 
   // Xóa sản phẩm
   const { mutate } = useMutation({
-    mutationFn: async (productVariantId) => {
-      await API.delete(`/admin/productvariants/${productVariantId}/soft`);
+    mutationFn: async (id) => {
+      await API.delete(`/admin/productvariants/${id}/soft`);
     },
     onSuccess: () => {
       messageApi.success("Xóa sản phẩm thành công");
       queryClient.invalidateQueries({ queryKey: ["PRODUCT_VARIANTS_KEY"] });
     },
-    onError: () => {
-      messageApi.error("Không thể xóa sản phẩm!");
+    onError: (error) => {
+      messageApi.error("Có lỗi xảy ra: " + error.message);
     },
   });
 
   const columns = [
     {
-      title: "STT",
+      title: "#",
       dataIndex: "stt",
       key: "stt",
     },
@@ -100,7 +102,7 @@ const ProductVariantList = () => {
           <div>
             <div style={{ fontWeight: 500 }}>{item.name}</div>
             <div style={{ color: "#888" }}>
-              Màu: {item.color} | Dung lượng: {item.storage}
+              Màu: {item.color} - Dung lượng: {item.storage}
             </div>
           </div>
         );
@@ -110,9 +112,8 @@ const ProductVariantList = () => {
       title: "Giá",
       dataIndex: "price",
       key: "price",
-      render: (price) => {
-        price ? `${Number(price).toLocaleString("vi-VN")} VNĐ` : "0 VNĐ";
-      },
+      render: (price) =>
+        price ? `${Number(price).toLocaleString("vi-VN")} VNĐ` : "0 VNĐ",
     },
     { title: "Số lượng", dataIndex: "stock", key: "stock" },
     {
@@ -141,7 +142,7 @@ const ProductVariantList = () => {
           <Popconfirm
             title="Xóa sản phẩm"
             description="Bạn có chắc chắn muốn xóa không?"
-            onConfirm={() => mutate(item.productId)}
+            onConfirm={() => mutate(item.id)}
             okText="Có"
             cancelText="Không"
           >
@@ -165,9 +166,10 @@ const ProductVariantList = () => {
   ];
 
   const filteredData = data?.filter((product) => {
-    const matchesName = product.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const matchesName =
+      typeof product.name === "string" &&
+      product.name.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesCategory = categoryFilter
       ? product.category === categoryFilter
       : true;
@@ -207,8 +209,8 @@ const ProductVariantList = () => {
     <div>
       {contextHolder}
 
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-3xl font-semibold">Danh sách sản phẩm biến thể</h1>
+      <div className="mb-5">
+        <h1>Danh sách sản phẩm biến thể</h1>
       </div>
 
       <Space style={{ marginBottom: 20 }}>

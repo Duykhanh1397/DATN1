@@ -2,8 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import {
   Table,
-  Card,
-  Spin,
   Form,
   Input,
   Select,
@@ -13,6 +11,7 @@ import {
   message,
   Row,
   Col,
+  Tag,
 } from "antd";
 import API from "../../../services/api";
 import { DoubleLeftOutlined } from "@ant-design/icons";
@@ -20,14 +19,30 @@ import { DoubleLeftOutlined } from "@ant-design/icons";
 const OrderDetail = () => {
   const { orderId } = useParams();
   const queryClient = useQueryClient();
-  const [form] = Form.useForm(); // lấy instance form
+  const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+
+  // Format tiền
+  const formatCurrency = (value) =>
+    `${Number(value).toLocaleString("vi-VN")} VNĐ`;
+
+  // Hàm đổi màu trạng thái thanh toán
+  const getPaymentTagColor = (status) => {
+    switch (status) {
+      case "Thanh toán thành công":
+        return "green";
+      case "Thanh toán thất bại":
+        return "red";
+      case "Chờ thanh toán":
+      default:
+        return "orange";
+    }
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["ORDER_ITEM", orderId],
     queryFn: async () => {
       const { data } = await API.get(`/orders/${orderId}`);
-      console.log(data);
       return data.data;
     },
     enabled: !!orderId,
@@ -35,20 +50,29 @@ const OrderDetail = () => {
 
   const { mutate, isLoading: isUpdating } = useMutation({
     mutationFn: async (status) => {
-      return API.put(`/admin/orders/${orderId}/update-status`, { status });
+      try {
+        const response = await API.put(
+          `/admin/orders/${orderId}/update-status`,
+          { status }
+        );
+        return response.data;
+      } catch (error) {
+        throw error.response?.data || error;
+      }
     },
-
-    onSuccess: () => {
-      messageApi.success("Cập nhật trạng thái thành công!");
+    onSuccess: (data) => {
+      messageApi.success(data.message || "Cập nhật trạng thái thành công!");
       queryClient.invalidateQueries(["ORDER_ITEM", orderId]);
     },
-    onError: () => {
-      messageApi.error("Cập nhật trạng thái thất bại:" + error.message);
+    onError: (error) => {
+      messageApi.error(
+        error?.message || "Có lỗi xảy ra trong quá trình cập nhật trạng thái."
+      );
     },
   });
 
-  const paymentStatus = data?.payment_status;
   const user = data?.user;
+  const paymentStatus = data?.payment?.payment_status ?? "Chờ thanh toán";
 
   const columns = [
     {
@@ -68,29 +92,22 @@ const OrderDetail = () => {
     {
       title: "Sản phẩm",
       render: (_, item) => {
-        const productName =
-          item.product_variant?.product?.name || "Không rõ sản phẩm";
-        const variantColor =
-          item.product_variant?.color?.value || "Không rõ màu";
-        const variantStorage =
-          item.product_variant?.storage?.value || "Không rõ dung lượng";
-
+        const productName = item.product_variant?.product?.name || "-";
+        const variantColor = item.product_variant?.color?.value || "-";
+        const variantStorage = item.product_variant?.storage?.value || "-";
         return (
-          <>
-            <div className="fw-semibold">{productName}</div>
-            <div className="text-muted">
+          <div>
+            <div style={{ fontWeight: 500 }}>{productName}</div>
+            <div style={{ color: "#888" }}>
               Màu: {variantColor} - Dung lượng: {variantStorage}
             </div>
-          </>
+          </div>
         );
       },
     },
     {
       title: "Giá",
-      render: (_, item) => {
-        const price = item.product_variant?.price;
-        return price ? `${Number(price).toLocaleString("vi-VN")} VNĐ` : "0 VNĐ";
-      },
+      render: (_, item) => formatCurrency(item.product_variant?.price || 0),
     },
     {
       title: "Số lượng",
@@ -98,24 +115,20 @@ const OrderDetail = () => {
     },
     {
       title: "Tổng",
-      dataIndex: "total_price",
-      render: (_, item) => {
-        const price = item.product_variant?.price || 0;
-        return `${(price * item.quantity).toLocaleString()} VNĐ` || "0 VNĐ";
-      },
+      render: (_, item) =>
+        formatCurrency((item.product_variant?.price || 0) * item.quantity),
     },
   ];
 
-  console.log("Trạng thái hiện tại:", data?.status);
-
-  if (isLoading) return <div>Đang tải dữ liệu...</div>;
+  if (isLoading) return <div>Đang tải ...</div>;
 
   const handleFinish = (values) => {
-    console.log("Giá trị form:", values);
     const { status } = values;
 
     if (["Giao hàng thành công", "Hủy đơn"].includes(data?.status)) {
-      message.warning("Đơn hàng đã hoàn tất hoặc đã hủy, không thể cập nhật!");
+      messageApi.warning(
+        "Đơn hàng đã hoàn tất hoặc đã hủy, không thể cập nhật!"
+      );
       return;
     }
 
@@ -125,12 +138,10 @@ const OrderDetail = () => {
   return (
     <div>
       {contextHolder}
-      <h1 className="text-3xl font-semibold mb-5">
-        Chi tiết đơn hàng #{data.id}
-      </h1>
+      <h1 className="mb-5">Chi tiết đơn hàng - {data.order_code}</h1>
 
       <Row gutter={24}>
-        <Col span={8}>
+        <Col span={10}>
           <Form
             form={form}
             labelCol={{ span: 8 }}
@@ -143,22 +154,15 @@ const OrderDetail = () => {
             onFinish={handleFinish}
           >
             <Form.Item label="Tên người nhận">
-              <Input
-                value={user?.name || data?.name || "Chưa cập nhật"}
-                readOnly
-              />
+              <span>{user?.name || "Khách"}</span>
             </Form.Item>
             <Form.Item label="Số điện thoại">
-              <Input
-                value={data?.phone_number || user?.phone || "Chưa cập nhật"}
-                readOnly
-              />
+              <span>
+                {data?.phone_number || user?.phone || "Chưa cập nhật"}
+              </span>
             </Form.Item>
             <Form.Item label="Địa chỉ">
-              <Input
-                value={data?.address || user?.address || "Chưa cập nhật"}
-                readOnly
-              />
+              <span>{data?.address || user?.address || "Chưa cập nhật"}</span>
             </Form.Item>
 
             <Form.Item
@@ -183,17 +187,11 @@ const OrderDetail = () => {
             </Form.Item>
 
             <Form.Item label="Trạng thái thanh toán">
-              <Select value={paymentStatus} disabled>
-                <Select.Option value="Đã thanh toán">
-                  Đã thanh toán
-                </Select.Option>
-                <Select.Option value="Chưa thanh toán">
-                  Chưa thanh toán
-                </Select.Option>
-              </Select>
+              <Tag color={getPaymentTagColor(paymentStatus)}>
+                {paymentStatus}
+              </Tag>
             </Form.Item>
 
-            {/* Nút submit để lưu */}
             <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
               <Button type="primary" htmlType="submit" loading={isUpdating}>
                 Cập nhật trạng thái
@@ -202,7 +200,7 @@ const OrderDetail = () => {
           </Form>
         </Col>
 
-        <Col span={16}>
+        <Col span={14}>
           <Skeleton loading={isLoading} active style={{ marginBottom: 50 }}>
             <Table
               dataSource={data?.order_items || []}

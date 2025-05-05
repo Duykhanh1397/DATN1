@@ -1,71 +1,4 @@
-<<<<<<< Updated upstream
-// import { Layout, Menu } from "antd";
-// import { Link } from "react-router-dom";
-// import {
-//   DashboardOutlined,
-//   ShoppingCartOutlined,
-//   ShoppingOutlined,
-//   UserOutlined,
-//   TagOutlined,
-//   BarChartOutlined,
-// } from "@ant-design/icons";
-
-// const { Sider } = Layout;
-
-// const Sidebar = () => {
-//   const menuItems = [
-//     {
-//       key: "dashboard",
-//       icon: <DashboardOutlined />,
-//       label: <Link to="/admin">Dashboard</Link>,
-//     },
-//     {
-//       key: "products",
-//       icon: <ShoppingOutlined />,
-//       label: <Link to="/admin/products">Quản lý sản phẩm</Link>,
-//     },
-//     ,
-//     {
-//       key: "categories",
-//       icon: <TagOutlined />,
-//       label: <Link to="/admin/categories">Quản lý danh mục</Link>,
-//     },
-//     {
-//       key: "orders",
-//       icon: <ShoppingCartOutlined />,
-//       label: <Link to="/admin/orders">Quản lý đơn hàng</Link>,
-//     },
-//     {
-//       key: "users",
-//       icon: <UserOutlined />,
-//       label: <Link to="/admin/users">Quản lý tài khoản</Link>,
-//     },
-//     {
-//       key: "coupons",
-//       icon: <TagOutlined />,
-//       label: <Link to="/admin/coupons">Mã giảm giá</Link>,
-//     },
-//     {
-//       key: "reports",
-//       icon: <BarChartOutlined />,
-//       label: <Link to="/admin/reports">Thống kê</Link>,
-//     },
-//   ];
-
-//   return (
-//     <Sider collapsible>
-//       <Menu theme="dark" mode="inline" items={menuItems} />
-//     </Sider>
-//   );
-// };
-
-// export default Sidebar;
-
-
-import { Layout, Menu } from "antd";
-=======
 import { Layout, Menu, Popconfirm } from "antd";
->>>>>>> Stashed changes
 import { Link, useLocation } from "react-router-dom";
 import {
   DashboardOutlined,
@@ -75,23 +8,20 @@ import {
   TagOutlined,
   BarChartOutlined,
   LogoutOutlined,
+  DeleteOutlined,
+  AppstoreOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
-import Admin from "./Admin";
 import { AuthContext } from "../../../context/AuthContext";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
 const { Sider } = Layout;
 
 const Sidebar = () => {
-<<<<<<< Updated upstream
-  const location = useLocation(); // ✅ Lấy đường dẫn hiện tại
-
-=======
-  const location = useLocation(); // Lấy URL hiện tại để active menu
+  const location = useLocation();
   const { user, logout } = useContext(AuthContext);
+  const [collapsed, setCollapsed] = useState(false); // State để kiểm tra thu nhỏ
 
-  // Cấu hình các item cho menu
->>>>>>> Stashed changes
   const menuItems = [
     {
       key: "/admin",
@@ -101,19 +31,12 @@ const Sidebar = () => {
     {
       key: "/admin/users",
       icon: <UserOutlined />,
-<<<<<<< Updated upstream
-      label: <Link to="/admin/users">Quản lý tài khoản</Link>, // ✅ Kiểm tra đường dẫn
-=======
       label: <Link to="/admin/users">Quản lý tài khoản</Link>,
->>>>>>> Stashed changes
     },
     {
       key: "/admin/products",
       icon: <ShoppingOutlined />,
-<<<<<<< Updated upstream
-      label: <Link to="/admin/products">Quản lý sản phẩm</Link>,
-=======
-      label: "Quản lý sản phẩm", // Tạo tiêu đề cho nhóm menu con
+      label: "Quản lý sản phẩm",
       children: [
         {
           key: "/admin/products/list",
@@ -124,7 +47,6 @@ const Sidebar = () => {
           label: <Link to="/admin/products/variants">Sản phẩm biến thể</Link>,
         },
       ],
->>>>>>> Stashed changes
     },
     {
       key: "/admin/categories",
@@ -137,59 +59,118 @@ const Sidebar = () => {
       label: <Link to="/admin/orders">Quản lý đơn hàng</Link>,
     },
     {
-      key: "/admin/coupons",
+      key: "/admin/vouchers",
       icon: <TagOutlined />,
-      label: <Link to="/admin/coupons">Mã giảm giá</Link>,
+      label: <Link to="/admin/vouchers">Mã giảm giá</Link>,
     },
     {
-      key: "/admin/reports",
-      icon: <BarChartOutlined />,
-      label: <Link to="/admin/reports">Thống kê</Link>,
+      key: "/admin/variant",
+      icon: <AppstoreOutlined />,
+      label: "Quản lý biến thể",
+      children: [
+        {
+          key: "/admin/variant/color",
+          label: <Link to="/admin/variant/color">Màu sắc</Link>,
+        },
+        {
+          key: "/admin/variant/storage",
+          label: <Link to="/admin/variant/storage">Dung lượng</Link>,
+        },
+      ],
+    },
+    {
+      key: "/admin/softdelete",
+      icon: <DeleteOutlined />,
+      label: "Danh sách xóa mềm",
+      children: [
+        {
+          key: "/admin/softdelete/products",
+          label: <Link to="/admin/softdelete/products">Sản phẩm</Link>,
+        },
+        {
+          key: "/admin/softdelete/productvariants",
+          label: (
+            <Link to="/admin/softdelete/productvariants">
+              Sản phẩm biến thể
+            </Link>
+          ),
+        },
+        {
+          key: "/admin/softdelete/categories",
+          label: <Link to="/admin/softdelete/categories">Danh mục</Link>,
+        },
+        {
+          key: "/admin/softdelete/users",
+          label: <Link to="/admin/softdelete/users">Tài khoản</Link>,
+        },
+        {
+          key: "/admin/softdelete/vouchers",
+          label: <Link to="/admin/softdelete/vouchers">Mã giảm giá</Link>,
+        },
+        // {
+        //   key: "/admin/softdelete/color",
+        //   label: <Link to="/admin/softdelete/color">Màu sắc</Link>,
+        // },
+        // {
+        //   key: "/admin/softdelete/storage",
+        //   label: <Link to="/admin/softdelete/storage">Dung lượng</Link>,
+        // },
+      ],
+    },
+    {
+      key: "/admin/review",
+      icon: <CommentOutlined />,
+      label: <Link to="/admin/review">Đánh giá</Link>,
     },
   ];
 
   return (
-<<<<<<< Updated upstream
-    <Sider collapsible>
-      <Menu
-        theme="dark"
-        mode="inline"
-        selectedKeys={[location.pathname]} // ✅ Đảm bảo trạng thái active
-        items={menuItems}
-      />
-=======
-    <Sider collapsible width={300} style={{ minHeight: "100vh" }}>
+    <Sider
+      collapsible
+      collapsed={collapsed}
+      onCollapse={setCollapsed} // Cập nhật trạng thái collapsed
+      width={250}
+      style={{ minHeight: "100vh" }}
+    >
+      {/* Header Admin */}
       <div
         style={{
           height: 64,
           margin: 16,
           background: "rgba(255, 255, 255, 0.2)",
           borderRadius: 8,
-          textAlign: "center",
-          lineHeight: "64px",
-          color: "#fff",
-          fontWeight: "bold",
-          display: "flex", // Flex để xếp ngang
+          display: "flex",
           alignItems: "center",
-          justifyContent: "center", // căn giữa
+          justifyContent: "center",
+          overflow: "hidden", // Ẩn nội dung tràn khi thu nhỏ
+          whiteSpace: "nowrap",
+          transition: "width 0.3s",
         }}
       >
         <UserOutlined
-          style={{ fontSize: "24px", color: "#fff", marginRight: "8px" }}
+          style={{
+            fontSize: "24px",
+            color: "#fff",
+            marginRight: collapsed ? 0 : 8, // Ẩn khoảng cách khi thu nhỏ
+            transition: "margin 0.3s",
+          }}
         />
-        <h4 style={{ color: "#fff", margin: 0 }}>
-          {user?.name ? user.name : "Admin Dashboard"}
-        </h4>
+        {!collapsed && (
+          <h4 style={{ color: "#fff", margin: 0 }}>
+            {user?.name || "Admin Dashboard"}
+          </h4>
+        )}
       </div>
 
+      {/* Menu */}
       <Menu
         theme="dark"
         mode="inline"
-        selectedKeys={[location.pathname]} // Active item theo URL
-        defaultOpenKeys={["/admin/products"]} // Mở menu con nếu cần
+        selectedKeys={[location.pathname]}
         items={menuItems}
       />
 
+      {/* Nút đăng xuất */}
       <div
         style={{
           padding: "16px",
@@ -210,24 +191,26 @@ const Sidebar = () => {
               textAlign: "center",
               padding: "12px 0",
               cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.3s",
             }}
           >
             <LogoutOutlined
               style={{
                 fontSize: "18px",
-                marginRight: "8px",
+                marginRight: collapsed ? 0 : 8, // Ẩn khoảng cách khi thu nhỏ
                 color: "#ff4d4f",
+                transition: "margin 0.3s",
               }}
             />
-            Đăng xuất
+            {!collapsed && "Đăng xuất"}
           </div>
         </Popconfirm>
       </div>
->>>>>>> Stashed changes
     </Sider>
   );
 };
 
 export default Sidebar;
-
-

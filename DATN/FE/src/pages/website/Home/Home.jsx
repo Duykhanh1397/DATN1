@@ -1,19 +1,22 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Banner from "../components/Banner";
 import API from "../../../services/api";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 
 const Home = () => {
+  const queryClient = useQueryClient();
   const { data: products, isLoading } = useQuery({
     queryKey: ["PRODUCTS_KEY"],
     queryFn: async () => {
       const { data } = await API.get("/products");
-
+      console.log(data);
       return data.data.map((item, index) => {
         const imageUrl = item.image
-          ? `http://localhost:8000/storage/${item.image}`
+          ? item.image.startsWith("/storage/")
+            ? `http://localhost:8000/${item.image}`
+            : `http://localhost:8000/storage/${item.image}`
           : null;
 
         return {
@@ -27,6 +30,9 @@ const Home = () => {
           status: item.status,
         };
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["CART_ITEM"]);
     },
   });
 
@@ -62,7 +68,7 @@ const Home = () => {
     <>
       <Banner />
 
-      {/* Danh mục */}
+      
       <div style={{ backgroundColor: "#333", padding: "20px 0" }}>
         <section className="container mb-4">
           <div className="d-flex justify-content-between align-items-center">
@@ -81,7 +87,7 @@ const Home = () => {
                   }}
                 >
                   <Link
-                    to={`/categories/${category.name.toLowerCase()}`}
+                    to={`/${category.name.toLowerCase().replace(/\s+/g, "-")}`}
                     className="text-decoration-none text-light"
                   >
                     <div
@@ -107,20 +113,15 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Sản phẩm nổi bật */}
+        
         <section className="font-poppins container mb-4">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h2 className="fs-2 fw-semibold text-light">Sản Phẩm Nổi Bật</h2>
-            <Link
-              to="/products"
-              className="btn border border-warning text-light custom-hover"
-            >
-              Xem tất cả
-            </Link>
+            <h2 className="fs-2 fw-semibold text-light">Sản Phẩm</h2>
+
           </div>
 
           <div className="row g-3">
-            {products?.slice(0, 4).map((product) => (
+            {products?.map((product) => (
               <div key={product.key} className="col-md-3">
                 <div className="card border-0 shadow-sm h-100 product-box ">
                   <Link to={`/product/${product.key}`}>

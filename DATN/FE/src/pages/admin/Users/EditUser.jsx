@@ -28,15 +28,14 @@ const EditUser = ({ user }) => {
       queryClient.invalidateQueries({ queryKey: ["USERS_KEY"] });
     },
     onError: (error) => {
-      messageApi.error("Cập nhật thất bại: " + error.message);
-      console.error("API Error:", error);
+      messageApi.error("Có lỗi xảy ra: " + error.message);
     },
   });
 
   return (
     <div>
       {contextHolder}
-      <h1 className="text-3xl font-semibold mb-5">Cập nhật người dùng</h1>
+      <h1 className="mb-5">Cập nhật người dùng</h1>
       <Form
         form={form}
         initialValues={{ ...user }}

@@ -7,7 +7,8 @@ import {
   SyncOutlined,
   CarOutlined,
 } from "@ant-design/icons";
-
+import logo from "../../image/logo.png";
+import { Link } from "react-router-dom";
 const Footer = () => {
   return (
     <div style={{ backgroundColor: "#000", color: "#fff", padding: "30px 0" }}>
@@ -21,12 +22,19 @@ const Footer = () => {
             alignItems: "center",
           }}
         >
-          <img
-            src=""
-            alt="Ibee"
-            style={{ width: "100px", height: "100px", objectFit: "contain" }}
-          />
-          <h3 style={{ marginTop: "10px" }}>Ibee</h3>
+          <div className="logo">
+            <Link to={"/"}>
+              <img
+                src={logo}
+                alt="Ibee"
+                style={{
+                  objectFit: "contain",
+                  height: "200px",
+                  width: "300px",
+                }}
+              />
+            </Link>
+          </div>
         </Col>
         <Col xs={24} md={8}>
           <h3 style={{ marginBottom: "15px", fontWeight: "bold" }}>
