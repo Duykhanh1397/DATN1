@@ -114,7 +114,7 @@ class CartItemController extends Controller
                 ], 404);
             }
 
-            // Kiểm tra tồn kho
+            // Kiểm tra tồn kho 11
             if ($variant->stock < $validatedData['quantity']) {
                 return response()->json([
                     'status' => false,
