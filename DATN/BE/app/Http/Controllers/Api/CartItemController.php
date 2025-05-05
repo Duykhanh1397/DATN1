@@ -323,7 +323,7 @@ class CartItemController extends Controller
     }
 
     /**
-     * 📌 Xóa các sản phẩm được chọn
+     * 📌 Xóa các sản phẩm được chọn ww
      */
     public function removeSelectedItems(Request $request)
     {
@@ -346,7 +346,7 @@ class CartItemController extends Controller
     }
 
     /**
-     * 📌 Cập nhật tổng tiền của giỏ hàng
+     * 📌 Cập nhật tổng tiền của giỏ hàng n
      */
     private function calculateTotalAmount($cartId)
     {
