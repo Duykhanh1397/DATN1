@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
+use App\Models\Cart; 
 use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -150,4 +150,4 @@ class CartController extends Controller
             'file' => $e->getFile()
         ], 500);
     }
-}
+}   
