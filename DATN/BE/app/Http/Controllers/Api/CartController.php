@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart; 
+use App\Models\Cart;
 use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +35,7 @@ class CartController extends Controller
             return $this->serverError($e, 'Lỗi khi lấy giỏ hàng');
         }
     }
+
     /**
      * 📌 Quản trị viên có thể lấy danh sách tất cả giỏ hàng (Chỉ Admin)
      */
@@ -150,4 +151,3 @@ class CartController extends Controller
         ], 500);
     }
 }
-

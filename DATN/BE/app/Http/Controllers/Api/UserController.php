@@ -79,9 +79,8 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'password' => 'sometimes|min:6',
-            'role' => 'sometimes|in:Admin,Customer',
-            'status' => 'sometimes|required|in:Hoạt động,Ngưng hoạt động' 
-        ]); 
+            'role' => 'sometimes|in:Admin,Customer'
+        ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
@@ -92,14 +91,13 @@ class UserController extends Controller
             'email' => $request->email ?? $user->email,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
             'role' => $request->role ?? $user->role,
-            'status' => $request->status ?? $user->status,
         ]);
 
         return response()->json(['message' => 'Cập nhật tài khoản thành công ', 'user' => $user], 200);
     }
 
     // Xóa mềm user
-    public function softDelete($id)
+    public function destroy($id)
 {
     $user = User::find($id);
     if (!$user) {
@@ -110,7 +108,7 @@ class UserController extends Controller
     return response()->json(['message' => 'Xóa tài khoản thành công'], 200);
 }
 
-public function trashed()
+public function getDeletedUsers()
 {
     try {
         // Lấy danh sách users đã bị xóa mềm (có `deleted_at` không null)
@@ -160,3 +158,4 @@ public function forceDelete($id)
 }
 
 }
+
