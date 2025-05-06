@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 
+
 class AuthController extends Controller
 {
     /**
@@ -17,51 +18,6 @@ class AuthController extends Controller
      * @param Request $request
      * @return User 
      */
-    // public function RegisterUser(Request $request)
-    // {
-    //     try {
-    //         //  Kiểm tra đầu vào
-    //         $validateUser = Validator::make($request->all(), [
-    //             'name' => 'required',
-    //             'email' => 'required|email|unique:users,email',
-    //             'password' => 'required',
-    //             'role' => 'required|in:Admin,Customer' // Chỉ cho phép 2 role
-    //         ]);
-    
-    //         if ($validateUser->fails()) {
-    //             return response()->json([
-    //                 'status' => false,
-    //                 'message' => 'Validation error',
-    //                 'errors' => $validateUser->errors()
-    //             ], 401);
-    //         }
-
-    //         //  Tạo user
-    //         $user = User::create([
-    //             'name' => $request->name,
-    //             'email' => $request->email,
-    //             'password' => Hash::make($request->password),
-    //             'role' => $request->role // Gán role
-    //         ]);
-    
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Tạo tài khoản thành công ',
-    //             'token' => $user->createToken("API TOKEN")->plainTextToken
-    //         ], 200);
-    
-    //     } catch (\Throwable $th) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => $th->getMessage()
-    //         ], 500);
-    //     }
-    // }
-    
-
-
-
-
     public function RegisterUser(Request $request)
     {
         try {
@@ -114,7 +70,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    
 
     
 
@@ -124,221 +79,110 @@ class AuthController extends Controller
      * @param Request $request
      * @return User
      */
-    // public function loginUser(Request $request)
-    // {
-    //     try {
-    //         //  Kiểm tra đầu vào
-    //         $validateUser = Validator::make($request->all(), [
-    //             'email' => 'required|email',
-    //             'password' => 'required'
-    //         ]);
-    
-    //         if ($validateUser->fails()) {
-    //             return response()->json([
-    //                 'status' => false,
-    //                 'message' => 'Validation error',
-    //                 'errors' => $validateUser->errors()
-    //             ], 401);
-    //         }
-    
-    //         //  Kiểm tra đăng nhập
-    //         if (!Auth::attempt($request->only(['email', 'password']))) {
-    //             return response()->json([
-    //                 'status' => false,
-    //                 'message' => 'Email & Password không trùng với bản ghi.',
-    //             ], 401);
-    //         }
-    
-    //         //  Lấy thông tin user
-    //         $user = Auth::user();
-    
-    //         //  Xác định URL chuyển hướng dựa vào role
-    //         // $redirect_url = $user->role === 'Admin' ? '/users' : '/home';
-    
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'User Logged In Successfully',
-    //             'role' => $user->role, // Gửi role về FE
-    //             // 'redirect_url' => $redirect_url, // URL điều hướng
-    //             'token' => $user->createToken("API TOKEN")->plainTextToken
-    //         ], 200);
-    
-    //     } catch (\Throwable $th) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => $th->getMessage()
-    //         ], 500);
-    //     }
-    // }
-    
-
-
-
-
-
-
-
-
-
-
-
-
-    public function loginUser(Request $request)
-    {
-        try {
-            // Kiểm tra đầu vào
-            $validateUser = Validator::make($request->all(), [
-                'email' => 'required|email',
-                'password' => 'required'
-            ]);
-    
-            if ($validateUser->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validateUser->errors()
-                ], 401);
-            }
-    
-            // Kiểm tra đăng nhập
-            if (!Auth::attempt($request->only(['email', 'password']))) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Email hoặc mật khẩu không chính xác.'
-                ], 401);
-            }
-    
-            // Lấy thông tin user
-            $user = Auth::user();
-    
-            return response()->json([
-                'status' => true,
-                'message' => 'Đăng nhập thành công',
-                'token' => $user->createToken("API TOKEN")->plainTextToken,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role
-                ]
-            ], 200);
-    
-        } catch (\Throwable $th) {
-            return response()->json([
-                'status' => false,
-                'message' => "Lỗi hệ thống, vui lòng thử lại.",
-                'error' => $th->getMessage()
-            ], 500);
-        }
-    }
-    
+   
+     public function loginUser(Request $request)
+     {
+         try {
+             // Kiểm tra đầu vào
+             $validateUser = Validator::make($request->all(), [
+                 'email' => 'required|email',
+                 'password' => 'required'
+             ]);
+     
+             if ($validateUser->fails()) {
+                 return response()->json([
+                     'status' => false,
+                     'message' => 'Validation error',
+                     'errors' => $validateUser->errors()
+                 ], 401);
+             }
+     
+             // Kiểm tra đăng nhập
+             if (!Auth::attempt($request->only(['email', 'password']))) {
+                 return response()->json([
+                     'status' => false,
+                     'message' => 'Email hoặc mật khẩu không chính xác.'
+                 ], 401);
+             }
+     
+             // Lấy thông tin user
+             $user = Auth::user();
+     
+             return response()->json([
+                 'status' => true,
+                 'message' => 'Đăng nhập thành công',
+                 'token' => $user->createToken("API TOKEN")->plainTextToken,
+                 'user' => [
+                     'id' => $user->id,
+                     'name' => $user->name,
+                     'email' => $user->email,
+                     'role' => $user->role,
+                     'phone' => $user->phone, 
+                     'address' => $user->address, 
+                 ]
+             ], 200);
+     
+         } catch (\Throwable $th) {
+             return response()->json([
+                 'status' => false,
+                 'message' => "Lỗi hệ thống, vui lòng thử lại.",
+                 'error' => $th->getMessage()
+             ], 500);
+         }
+     }
+     
+ 
 
 
 
 
     
-
-    // public function changePassword(Request $request)
-    // {
-    //     try {
-    //         // Lấy user đăng nhập
-    //         $user = Auth::user();
-    
-    //         if (!$user) {
-    //             return response()->json([
-    //                 'status' => false,
-    //                 'message' => 'Unauthorized - không tìm thấy tài khoản '
-    //             ], 401);
-    //         }
-    
-    //         // Kiểm tra đầu vào
-    //         $validateUser = Validator::make($request->all(), [
-    //             'current_password' => 'required',
-    //             'new_password' => 'required|min:6|confirmed',
-    //         ]);
-    
-    //         if ($validateUser->fails()) {
-    //             return response()->json([
-    //                 'status' => false,
-    //                 'message' => 'Validation error',
-    //                 'errors' => $validateUser->errors()
-    //             ], 401);
-    //         }
-    
-    //         // Kiểm tra mật khẩu hiện tại có đúng không
-    //         if (!Hash::check($request->current_password, $user->password)) {
-    //             return response()->json([
-    //                 'status' => false,
-    //                 'message' => 'Mật khẩu hiện tại không chính xác '
-    //             ], 400);
-    //         }
-    
-    //         // Cập nhật mật khẩu mới
-    //         $user->update(['password' => Hash::make($request->new_password)]); // Dùng update() thay vì save()
-    
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Thay đổi mật khẩu thành công '
-    //         ], 200);
-    
-    //     } catch (\Throwable $th) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => $th->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-
-
-
-    public function changePassword(Request $request)
-{
-    try {
-        $user = Auth::user();
-
-        if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Bạn chưa đăng nhập.'
-            ], 401);
-        }
-
-        $validateUser = Validator::make($request->all(), [
-            'current_password' => 'required',
-            'new_password' => 'required|min:6|confirmed',
-        ]);
-
-        if ($validateUser->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Lỗi xác thực dữ liệu.',
-                'errors' => $validateUser->errors()
-            ], 400);
-        }
-
-        if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Mật khẩu hiện tại không đúng.'
-            ], 400);
-        }
-
-        $user->update(['password' => Hash::make($request->new_password)]);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Đổi mật khẩu thành công.'
-        ], 200);
-
-    } catch (\Throwable $th) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Lỗi hệ thống: ' . $th->getMessage()
-        ], 500);
-    }
-}
-
+     public function changePassword(Request $request)
+     {
+         try {
+             $user = Auth::user();
+     
+             if (!$user) {
+                 return response()->json([
+                     'status' => false,
+                     'message' => 'Bạn chưa đăng nhập.'
+                 ], 401);
+             }
+     
+             $validateUser = Validator::make($request->all(), [
+                 'current_password' => 'required',
+                 'new_password' => 'required|min:6|confirmed',
+             ]);
+     
+             if ($validateUser->fails()) {
+                 return response()->json([
+                     'status' => false,
+                     'message' => 'Lỗi xác thực dữ liệu.',
+                     'errors' => $validateUser->errors()
+                 ], 400);
+             }
+     
+             if (!Hash::check($request->current_password, $user->password)) {
+                 return response()->json([
+                     'status' => false,
+                     'message' => 'Mật khẩu hiện tại không đúng.'
+                 ], 400);
+             }
+     
+             $user->update(['password' => Hash::make($request->new_password)]);
+     
+             return response()->json([
+                 'status' => true,
+                 'message' => 'Đổi mật khẩu thành công.'
+             ], 200);
+     
+         } catch (\Throwable $th) {
+             return response()->json([
+                 'status' => false,
+                 'message' => 'Lỗi hệ thống: ' . $th->getMessage()
+             ], 500);
+         }
+     }
     
 
     
